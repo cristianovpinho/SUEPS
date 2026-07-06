@@ -42,34 +42,6 @@
             transform: scale(1.05);
             box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.3);
         }
-        
-        .toast {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            background: #1e293b;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-size: 13px;
-            max-width: 350px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            z-index: 100;
-            display: none;
-            border-left: 4px solid #f59e0b;
-        }
-        .toast.show {
-            display: block;
-            animation: slideIn 0.3s ease;
-        }
-        @keyframes slideIn {
-            from { transform: translateX(100px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        .toast a {
-            color: #60a5fa;
-            text-decoration: underline;
-        }
 
         .error-panel {
             background: #fef2f2;
@@ -78,6 +50,8 @@
             padding: 20px;
             border-radius: 12px;
             text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
         }
         .error-panel h3 {
             font-size: 18px;
@@ -93,6 +67,16 @@
             padding: 2px 8px;
             border-radius: 4px;
             font-size: 13px;
+        }
+        .error-panel .step {
+            text-align: left;
+            background: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+        .error-panel .step strong {
+            color: #1e293b;
         }
     </style>
 </head>
@@ -172,7 +156,6 @@
                         <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
                         Carregando...
                     </span>
-                    <span id="cache-status" class="hidden"></span>
                 </div>
             </div>
         </div>
@@ -239,17 +222,56 @@
         // ============================================
         // CONFIGURAÇÃO - ID DA SUA PLANILHA
         // ============================================
-      const CONFIG = {
-    SHEET_ID: '1Vwp4olbNoo4cLfeI92OP3Qr20thXiRBQ2iJSGLfcS0g',  // ← ID original
-    SHEET_NAME: 'Dados',
-    CACHE_KEY: 'senai_professionals_cache',
-    CACHE_EXPIRY: 2 * 60 * 1000,
-    };    
+        const CONFIG = {
+            SHEET_ID: '1Vwp4olbNoo4cLfeI92OP3Qr20thXiRBQ2iJSGLfcS0g',
+            SHEET_NAME: 'Dados',
+            CACHE_KEY: 'senai_professionals_cache',
+            CACHE_EXPIRY: 2 * 60 * 1000, // 2 minutos
+        };
 
         let professionals = [];
 
         // ============================================
-        // 1. CARREGAR DADOS DO GOOGLE SHEETS (SEM FALLBACK LOCAL)
+        // 1. FUNÇÃO PARA EXTRAIR JSON DA RESPOSTA DO GOOGLE
+        // ============================================
+        function extractJsonFromGoogleResponse(text) {
+            // Tenta diferentes formatos de resposta do Google
+            
+            // Formato 1: google.visualization.Query.setResponse({...})
+            let match = text.match(/google\.visualization\.Query\.setResponse\((\{.*\})\)/s);
+            if (match) {
+                return match[1];
+            }
+            
+            // Formato 2: /*O_o*/ google.visualization.Query.setResponse({...})
+            match = text.match(/\/\*O_o\*\/(?:.*?)google\.visualization\.Query\.setResponse\((\{.*\})\)/s);
+            if (match) {
+                return match[1];
+            }
+            
+            // Formato 3: Apenas o JSON puro
+            match = text.match(/^\{.*\}$/s);
+            if (match) {
+                return match[0];
+            }
+            
+            // Formato 4: Resposta com prefixo // [PREFIXO]
+            match = text.match(/\/\/.*?\n(\{.*\})/s);
+            if (match) {
+                return match[1];
+            }
+            
+            // Se nada funcionar, tenta encontrar qualquer JSON na string
+            match = text.match(/\{[\s\S]*"table"[\s\S]*\}/);
+            if (match) {
+                return match[0];
+            }
+            
+            return null;
+        }
+
+        // ============================================
+        // 2. CARREGAR DADOS DO GOOGLE SHEETS
         // ============================================
         async function loadFromGoogleSheets() {
             // Verificar cache primeiro
@@ -269,6 +291,7 @@
             try {
                 console.log('🔄 Buscando dados do Google Sheets...');
                 
+                // URL para acessar dados da planilha publicada
                 const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${CONFIG.SHEET_NAME}`;
                 console.log('📡 URL:', url);
                 
@@ -280,16 +303,18 @@
                 const text = await response.text();
                 console.log('📝 Resposta recebida, tamanho:', text.length);
                 
-                // Processar a resposta do Google
-                let jsonText = text;
-                if (text.startsWith('/*O_o*/')) {
-                    jsonText = text.substring(6);
-                }
-                if (jsonText.startsWith('google.visualization.Query.setResponse(')) {
-                    jsonText = jsonText.substring(40, jsonText.length - 2);
+                // Extrair o JSON da resposta
+                const jsonStr = extractJsonFromGoogleResponse(text);
+                
+                if (!jsonStr) {
+                    console.error('❌ Não foi possível extrair JSON da resposta');
+                    console.log('📄 Primeiros 500 caracteres da resposta:', text.substring(0, 500));
+                    throw new Error('Não foi possível interpretar a resposta do Google Sheets');
                 }
                 
-                const json = JSON.parse(jsonText);
+                console.log('✅ JSON extraído com sucesso');
+                
+                const json = JSON.parse(jsonStr);
                 console.log('✅ JSON parseado com sucesso');
                 
                 const rows = json.table.rows;
@@ -373,7 +398,7 @@
         }
 
         // ============================================
-        // 2. ABRIR PLANILHA PARA EDIÇÃO
+        // 3. ABRIR PLANILHA PARA EDIÇÃO
         // ============================================
         function openEditSheet() {
             const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/edit`;
@@ -381,7 +406,7 @@
         }
 
         // ============================================
-        // 3. RENDERIZAR ORGANOGRAMA
+        // 4. RENDERIZAR ORGANOGRAMA
         // ============================================
         function renderHierarchy() {
             const container = document.getElementById('view-hierarchy');
@@ -532,7 +557,7 @@
         }
 
         // ============================================
-        // 4. RENDERIZAR DIRETÓRIO
+        // 5. RENDERIZAR DIRETÓRIO
         // ============================================
         function renderDirectory() {
             const container = document.getElementById('view-directory');
@@ -633,7 +658,7 @@
         }
 
         // ============================================
-        // 5. CRIAR CARD DE PROFISSIONAL
+        // 6. CRIAR CARD DE PROFISSIONAL
         // ============================================
         function createProfessionalCard(prof) {
             const avatarBg = {
@@ -701,7 +726,7 @@
         }
 
         // ============================================
-        // 6. FUNÇÕES DE BUSCA E FILTRO
+        // 7. FUNÇÕES DE BUSCA E FILTRO
         // ============================================
         function filterProfessionals() {
             const input = document.getElementById('search-input');
@@ -798,7 +823,7 @@
         }
 
         // ============================================
-        // 7. INICIALIZAÇÃO
+        // 8. INICIALIZAÇÃO
         // ============================================
         async function init() {
             try {
@@ -830,25 +855,31 @@
                 console.error('❌ Erro na inicialização:', error);
                 
                 document.getElementById('loading-state').innerHTML = `
-                    <div class="error-panel max-w-2xl mx-auto">
+                    <div class="error-panel">
                         <div class="text-5xl mb-4">⚠️</div>
                         <h3>Erro ao carregar os dados</h3>
                         <p>${error.message || 'Erro desconhecido'}</p>
                         <br>
-                        <div class="text-left text-sm bg-white/50 p-4 rounded-lg">
-                            <p class="font-semibold">🔧 Verifique:</p>
-                            <p>1. A planilha está publicada?</p>
-                            <p class="text-xs text-slate-600 ml-4">Arquivo > Compartilhar > Publicar na web</p>
-                            <p>2. A aba se chama <code>${CONFIG.SHEET_NAME}</code>?</p>
-                            <p>3. Os cabeçalhos estão corretos?</p>
-                            <p class="text-xs text-slate-600 ml-4">name, role, gerencia, email, phone, temas</p>
+                        <div class="step">
+                            <strong>🔧 Verifique:</strong>
+                            <br><br>
+                            1️⃣ A planilha está publicada?<br>
+                            <span style="font-size:12px;color:#64748b;">Arquivo → Compartilhar → Publicar na web</span>
+                            <br><br>
+                            2️⃣ A aba se chama <code>Dados</code>?
+                            <br><br>
+                            3️⃣ Os cabeçalhos estão corretos?<br>
+                            <span style="font-size:12px;color:#64748b;">name, role, gerencia, email, phone, temas</span>
                         </div>
                         <br>
-                        <button onclick="location.reload()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors mr-2">
-                            Tentar novamente
+                        <button onclick="openEditSheet()" class="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition-colors mr-2">
+                            📂 Abrir Planilha
                         </button>
-                        <button onclick="openEditSheet()" class="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition-colors">
-                            Abrir Planilha
+                        <button onclick="location.reload()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                            🔄 Recarregar
+                        </button>
+                        <button onclick="localStorage.removeItem('${CONFIG.CACHE_KEY}');location.reload()" class="bg-slate-600 text-white px-6 py-2 rounded-lg hover:bg-slate-700 transition-colors">
+                            🗑️ Limpar Cache
                         </button>
                     </div>
                 `;
