@@ -226,7 +226,7 @@
             SHEET_ID: '1Vwp4olbNoo4cLfeI92OP3Qr20thXiRBQ2iJSGLfcS0g',
             SHEET_NAME: 'Dados',
             CACHE_KEY: 'senai_professionals_cache',
-            CACHE_EXPIRY: 2 * 60 * 1000, // 2 minutos
+            CACHE_EXPIRY: 2 * 60 * 1000,
         };
 
         let professionals = [];
@@ -235,37 +235,17 @@
         // 1. FUNÇÃO PARA EXTRAIR JSON DA RESPOSTA DO GOOGLE
         // ============================================
         function extractJsonFromGoogleResponse(text) {
-            // Tenta diferentes formatos de resposta do Google
-            
-            // Formato 1: google.visualization.Query.setResponse({...})
             let match = text.match(/google\.visualization\.Query\.setResponse\((\{.*\})\)/s);
-            if (match) {
-                return match[1];
-            }
+            if (match) return match[1];
             
-            // Formato 2: /*O_o*/ google.visualization.Query.setResponse({...})
             match = text.match(/\/\*O_o\*\/(?:.*?)google\.visualization\.Query\.setResponse\((\{.*\})\)/s);
-            if (match) {
-                return match[1];
-            }
+            if (match) return match[1];
             
-            // Formato 3: Apenas o JSON puro
             match = text.match(/^\{.*\}$/s);
-            if (match) {
-                return match[0];
-            }
+            if (match) return match[0];
             
-            // Formato 4: Resposta com prefixo // [PREFIXO]
-            match = text.match(/\/\/.*?\n(\{.*\})/s);
-            if (match) {
-                return match[1];
-            }
-            
-            // Se nada funcionar, tenta encontrar qualquer JSON na string
             match = text.match(/\{[\s\S]*"table"[\s\S]*\}/);
-            if (match) {
-                return match[0];
-            }
+            if (match) return match[0];
             
             return null;
         }
@@ -273,144 +253,151 @@
         // ============================================
         // 2. CARREGAR DADOS DO GOOGLE SHEETS
         // ============================================
-       async function loadFromGoogleSheets() {
-    // Verificar cache primeiro
-    const cached = localStorage.getItem(CONFIG.CACHE_KEY);
-    if (cached) {
-        try {
-            const cacheData = JSON.parse(cached);
-            if (Date.now() - cacheData.timestamp < CONFIG.CACHE_EXPIRY) {
-                console.log('📦 Usando dados em cache');
-                return cacheData.data;
-            }
-        } catch (e) {
-            console.warn('Cache inválido, recarregando...');
-        }
-    }
-
-    try {
-        console.log('🔄 Buscando dados do Google Sheets...');
-        
-        const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${CONFIG.SHEET_NAME}`;
-        console.log('📡 URL:', url);
-        
-        const response = await fetch(url);
-        console.log('📡 Status:', response.status);
-        
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
-        const text = await response.text();
-        console.log('📝 Resposta recebida, tamanho:', text.length);
-        
-        // Extrair o JSON da resposta
-        const jsonStr = extractJsonFromGoogleResponse(text);
-        
-        if (!jsonStr) {
-            console.error('❌ Não foi possível extrair JSON da resposta');
-            console.log('📄 Primeiros 500 caracteres da resposta:', text.substring(0, 500));
-            throw new Error('Não foi possível interpretar a resposta do Google Sheets');
-        }
-        
-        const json = JSON.parse(jsonStr);
-        
-        const rows = json.table.rows;
-        const headers = json.table.cols.map(col => col.label);
-        
-        // 🔍 DEBUG: Mostrar cabeçalhos e primeiras linhas
-        console.log('📋 CABEÇALHOS ENCONTRADOS:', headers);
-        console.log('📊 Total de linhas:', rows.length);
-        
-        if (rows.length > 0) {
-            console.log('📝 PRIMEIRA LINHA (dados brutos):', rows[0]);
-            console.log('📝 PRIMEIRA LINHA (valores):', rows[0].c.map(cell => cell ? cell.v : 'null'));
-        }
-        
-        if (rows.length === 0) {
-            throw new Error('A planilha está vazia!');
-        }
-        
-        // Converter para array de objetos
-        const data = rows.map(row => {
-            const obj = {};
-            row.c.forEach((cell, index) => {
-                const key = headers[index] || `col_${index}`;
-                obj[key] = cell ? cell.v : '';
-            });
-            return obj;
-        });
-
-        // 🔍 DEBUG: Mostrar os dados mapeados
-        console.log('📝 DADOS MAPEADOS (primeiros 3):', data.slice(0, 3));
-
-        // Mapear para o formato esperado
-        const mappedData = data.map(row => {
-            const getValue = (key) => {
-                const foundKey = Object.keys(row).find(k => k.toLowerCase() === key.toLowerCase());
-                return foundKey ? row[foundKey] : '';
-            };
-
-            const temasRaw = getValue('temas') || getValue('entregas') || '';
-            const temas = temasRaw ? temasRaw.split(/[|,;]\s*/).filter(t => t.trim()) : [];
-
-            const result = {
-                name: getValue('name') || getValue('nome') || '',
-                role: getValue('role') || getValue('cargo') || '',
-                gerencia: getValue('gerencia') || getValue('gerência') || '',
-                subSec: getValue('subSec') || getValue('subsec') || getValue('coordenacao') || '',
-                email: getValue('email') || getValue('e-mail') || '',
-                phone: getValue('phone') || getValue('telefone') || '',
-                avatar: getValue('avatar') || getValue('iniciais') || 'XX',
-                color: getValue('color') || getValue('cor') || 'slate',
-                temas: temas
-            };
-            
-            // 🔍 DEBUG: Mostrar cada registro mapeado
-            if (result.name) {
-                console.log('✅ Registro mapeado:', result);
-            }
-            
-            return result;
-        });
-
-        // Filtrar linhas vazias
-        const filteredData = mappedData.filter(p => p.name && p.name.trim() !== '');
-        
-        console.log(`📊 Total mapeado: ${mappedData.length}, filtrado: ${filteredData.length}`);
-        
-        if (filteredData.length === 0) {
-            // 🔍 DEBUG: Mostrar todos os dados para identificar o problema
-            console.log('⚠️ NENHUM REGISTRO COM NOME! Dados completos:', data);
-            throw new Error(`Nenhum profissional encontrado na planilha! Cabeçalhos encontrados: ${headers.join(', ')}`);
-        }
-
-        console.log(`✅ ${filteredData.length} profissionais carregados do Google Sheets`);
-
-        // Salvar no cache
-        localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify({
-            data: filteredData,
-            timestamp: Date.now()
-        }));
-
-        return filteredData;
-
-    } catch (error) {
-        console.error('❌ Erro ao carregar do Google Sheets:', error);
-        
-        // Tentar usar cache mesmo que expirado
-        const cached = localStorage.getItem(CONFIG.CACHE_KEY);
-        if (cached) {
-            try {
-                const cacheData = JSON.parse(cached);
-                if (cacheData.data && cacheData.data.length > 0) {
-                    console.log(`⚠️ Usando cache com ${cacheData.data.length} profissionais`);
-                    return cacheData.data;
+        async function loadFromGoogleSheets() {
+            // Verificar cache primeiro
+            const cached = localStorage.getItem(CONFIG.CACHE_KEY);
+            if (cached) {
+                try {
+                    const cacheData = JSON.parse(cached);
+                    if (Date.now() - cacheData.timestamp < CONFIG.CACHE_EXPIRY) {
+                        console.log('📦 Usando dados em cache');
+                        return cacheData.data;
+                    }
+                } catch (e) {
+                    console.warn('Cache inválido, recarregando...');
                 }
-            } catch (e) {}
+            }
+
+            try {
+                console.log('🔄 Buscando dados do Google Sheets...');
+                
+                const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${CONFIG.SHEET_NAME}`;
+                console.log('📡 URL:', url);
+                
+                const response = await fetch(url);
+                console.log('📡 Status:', response.status);
+                
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const text = await response.text();
+                console.log('📝 Resposta recebida, tamanho:', text.length);
+                
+                const jsonStr = extractJsonFromGoogleResponse(text);
+                if (!jsonStr) {
+                    throw new Error('Não foi possível interpretar a resposta do Google Sheets');
+                }
+                
+                const json = JSON.parse(jsonStr);
+                
+                const rows = json.table.rows;
+                const headers = json.table.cols.map(col => col.label);
+                
+                console.log('📋 Cabeçalhos:', headers);
+                console.log('📊 Total de linhas:', rows.length);
+
+                // 🔥 CORREÇÃO PRINCIPAL: Usar a primeira linha como cabeçalho
+                // Os cabeçalhos reais estão na primeira linha de dados
+                let dataRows = rows;
+                let headerRow = null;
+                
+                // Verificar se a primeira linha contém os cabeçalhos (name, role, etc)
+                if (rows.length > 0 && rows[0].c) {
+                    const firstRowValues = rows[0].c.map(cell => cell ? cell.v : '');
+                    const isHeaderRow = firstRowValues.some(v => 
+                        ['name', 'nome', 'role', 'cargo', 'gerencia', 'email'].some(h => 
+                            v && v.toLowerCase().includes(h)
+                        )
+                    );
+                    
+                    if (isHeaderRow) {
+                        console.log('📋 Primeira linha contém cabeçalhos! Usando como referência.');
+                        headerRow = firstRowValues;
+                        dataRows = rows.slice(1); // Pular a primeira linha
+                    } else {
+                        // Usar os cabeçalhos do Google
+                        headerRow = headers;
+                    }
+                }
+
+                console.log('📊 Linhas de dados:', dataRows.length);
+
+                // Mapear os dados
+                const mappedData = dataRows.map(row => {
+                    const values = row.c ? row.c.map(cell => cell ? cell.v : '') : [];
+                    
+                    // Função para buscar valor por nome da coluna
+                    const getValue = (colNames) => {
+                        if (!headerRow) return '';
+                        for (const name of colNames) {
+                            const idx = headerRow.findIndex(h => 
+                                h && h.toLowerCase().trim() === name.toLowerCase().trim()
+                            );
+                            if (idx !== -1 && values[idx] !== undefined) {
+                                return values[idx] || '';
+                            }
+                        }
+                        // Tentar busca parcial
+                        for (const name of colNames) {
+                            const idx = headerRow.findIndex(h => 
+                                h && h.toLowerCase().trim().includes(name.toLowerCase().trim())
+                            );
+                            if (idx !== -1 && values[idx] !== undefined) {
+                                return values[idx] || '';
+                            }
+                        }
+                        return '';
+                    };
+
+                    const temasRaw = getValue(['temas', 'entregas', 'responsabilidades']);
+                    const temas = temasRaw ? temasRaw.split(/[|,;]\s*/).filter(t => t && t.trim()) : [];
+
+                    return {
+                        name: getValue(['name', 'nome', 'colaborador']) || '',
+                        role: getValue(['role', 'cargo', 'funcao']) || '',
+                        gerencia: getValue(['gerencia', 'gerência', 'area']) || '',
+                        subSec: getValue(['subsec', 'subSec', 'coordenacao', 'coordenação']) || '',
+                        email: getValue(['email', 'e-mail', 'contato']) || '',
+                        phone: getValue(['phone', 'telefone', 'fone']) || '',
+                        avatar: 'XX',
+                        color: 'slate',
+                        temas: temas
+                    };
+                });
+
+                // Filtrar linhas vazias
+                const filteredData = mappedData.filter(p => p.name && p.name.trim() !== '');
+                
+                console.log(`✅ ${filteredData.length} profissionais carregados do Google Sheets`);
+
+                if (filteredData.length === 0) {
+                    throw new Error(`Nenhum profissional encontrado. Verifique os cabeçalhos da planilha.`);
+                }
+
+                // Salvar no cache
+                localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify({
+                    data: filteredData,
+                    timestamp: Date.now()
+                }));
+
+                return filteredData;
+
+            } catch (error) {
+                console.error('❌ Erro ao carregar do Google Sheets:', error);
+                
+                const cached = localStorage.getItem(CONFIG.CACHE_KEY);
+                if (cached) {
+                    try {
+                        const cacheData = JSON.parse(cached);
+                        if (cacheData.data && cacheData.data.length > 0) {
+                            console.log(`⚠️ Usando cache com ${cacheData.data.length} profissionais`);
+                            return cacheData.data;
+                        }
+                    } catch (e) {}
+                }
+                
+                throw error;
+            }
         }
-        
-        throw error;
-    }
-}
 
         // ============================================
         // 3. ABRIR PLANILHA PARA EDIÇÃO
@@ -673,20 +660,23 @@
         }
 
         // ============================================
-        // 6. CRIAR CARD DE PROFISSIONAL
+        // 6. CRIAR CARD DE PROFISSIONAL (SEM AVATAR E COLOR)
         // ============================================
         function createProfessionalCard(prof) {
-            const avatarBg = {
-                'Soluções Educacionais': 'bg-emerald-100 text-emerald-800',
-                'Negócios Educacionais': 'bg-blue-100 text-blue-800',
-                'Operações Educacionais': 'bg-amber-100 text-amber-800'
-            }[prof.gerencia] || 'bg-slate-100 text-slate-700';
-
+            // Gerar iniciais a partir do nome
+            const initials = prof.name ? prof.name.split(' ').filter(w => w.length > 0).map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'XX';
+            
             const cor = {
                 'Soluções Educacionais': 'emerald',
                 'Negócios Educacionais': 'blue',
                 'Operações Educacionais': 'amber'
             }[prof.gerencia] || 'slate';
+
+            const avatarBg = {
+                'Soluções Educacionais': 'bg-emerald-100 text-emerald-800',
+                'Negócios Educacionais': 'bg-blue-100 text-blue-800',
+                'Operações Educacionais': 'bg-amber-100 text-amber-800'
+            }[prof.gerencia] || 'bg-slate-100 text-slate-700';
 
             const temasBadges = (prof.temas && prof.temas.length > 0) ? 
                 prof.temas.map(tema => 
@@ -704,7 +694,7 @@
                         <div class="flex items-start gap-3 mb-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-12 h-12 ${avatarBg} rounded-xl flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
-                                    ${prof.avatar || 'XX'}
+                                    ${initials}
                                 </div>
                                 <div>
                                     <h4 class="font-bold text-slate-900 text-base leading-snug">${prof.name || 'Nome não informado'}</h4>
