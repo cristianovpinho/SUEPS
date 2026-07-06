@@ -273,129 +273,144 @@
         // ============================================
         // 2. CARREGAR DADOS DO GOOGLE SHEETS
         // ============================================
-        async function loadFromGoogleSheets() {
-            // Verificar cache primeiro
-            const cached = localStorage.getItem(CONFIG.CACHE_KEY);
-            if (cached) {
-                try {
-                    const cacheData = JSON.parse(cached);
-                    if (Date.now() - cacheData.timestamp < CONFIG.CACHE_EXPIRY) {
-                        console.log('📦 Usando dados em cache');
-                        return cacheData.data;
-                    }
-                } catch (e) {
-                    console.warn('Cache inválido, recarregando...');
-                }
+       async function loadFromGoogleSheets() {
+    // Verificar cache primeiro
+    const cached = localStorage.getItem(CONFIG.CACHE_KEY);
+    if (cached) {
+        try {
+            const cacheData = JSON.parse(cached);
+            if (Date.now() - cacheData.timestamp < CONFIG.CACHE_EXPIRY) {
+                console.log('📦 Usando dados em cache');
+                return cacheData.data;
             }
-
-            try {
-                console.log('🔄 Buscando dados do Google Sheets...');
-                
-                // URL para acessar dados da planilha publicada
-                const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${CONFIG.SHEET_NAME}`;
-                console.log('📡 URL:', url);
-                
-                const response = await fetch(url);
-                console.log('📡 Status:', response.status);
-                
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
-                const text = await response.text();
-                console.log('📝 Resposta recebida, tamanho:', text.length);
-                
-                // Extrair o JSON da resposta
-                const jsonStr = extractJsonFromGoogleResponse(text);
-                
-                if (!jsonStr) {
-                    console.error('❌ Não foi possível extrair JSON da resposta');
-                    console.log('📄 Primeiros 500 caracteres da resposta:', text.substring(0, 500));
-                    throw new Error('Não foi possível interpretar a resposta do Google Sheets');
-                }
-                
-                console.log('✅ JSON extraído com sucesso');
-                
-                const json = JSON.parse(jsonStr);
-                console.log('✅ JSON parseado com sucesso');
-                
-                const rows = json.table.rows;
-                const headers = json.table.cols.map(col => col.label);
-                
-                console.log('📋 Cabeçalhos:', headers);
-                console.log('📊 Total de linhas:', rows.length);
-                
-                if (rows.length === 0) {
-                    throw new Error('A planilha está vazia!');
-                }
-                
-                // Converter para array de objetos
-                const data = rows.map(row => {
-                    const obj = {};
-                    row.c.forEach((cell, index) => {
-                        const key = headers[index] || `col_${index}`;
-                        obj[key] = cell ? cell.v : '';
-                    });
-                    return obj;
-                });
-
-                // Mapear para o formato esperado
-                const mappedData = data.map(row => {
-                    const getValue = (key) => {
-                        const foundKey = Object.keys(row).find(k => k.toLowerCase() === key.toLowerCase());
-                        return foundKey ? row[foundKey] : '';
-                    };
-
-                    const temasRaw = getValue('temas') || getValue('entregas') || '';
-                    const temas = temasRaw ? temasRaw.split(/[|,;]\s*/).filter(t => t.trim()) : [];
-
-                    return {
-                        name: getValue('name') || getValue('nome') || '',
-                        role: getValue('role') || getValue('cargo') || '',
-                        gerencia: getValue('gerencia') || getValue('gerência') || '',
-                        subSec: getValue('subSec') || getValue('subsec') || getValue('coordenacao') || '',
-                        email: getValue('email') || getValue('e-mail') || '',
-                        phone: getValue('phone') || getValue('telefone') || '',
-                        avatar: getValue('avatar') || getValue('iniciais') || 'XX',
-                        color: getValue('color') || getValue('cor') || 'slate',
-                        temas: temas
-                    };
-                });
-
-                // Filtrar linhas vazias
-                const filteredData = mappedData.filter(p => p.name && p.name.trim() !== '');
-                
-                if (filteredData.length === 0) {
-                    throw new Error('Nenhum profissional encontrado na planilha!');
-                }
-
-                console.log(`✅ ${filteredData.length} profissionais carregados do Google Sheets`);
-
-                // Salvar no cache
-                localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify({
-                    data: filteredData,
-                    timestamp: Date.now()
-                }));
-
-                return filteredData;
-
-            } catch (error) {
-                console.error('❌ Erro ao carregar do Google Sheets:', error);
-                
-                // Tentar usar cache mesmo que expirado
-                const cached = localStorage.getItem(CONFIG.CACHE_KEY);
-                if (cached) {
-                    try {
-                        const cacheData = JSON.parse(cached);
-                        if (cacheData.data && cacheData.data.length > 0) {
-                            console.log(`⚠️ Usando cache com ${cacheData.data.length} profissionais`);
-                            return cacheData.data;
-                        }
-                    } catch (e) {}
-                }
-                
-                // Se não tem cache e não conseguiu carregar, mostrar erro
-                throw new Error(`Não foi possível carregar os dados da planilha.\n\nMotivo: ${error.message}\n\nVerifique se:\n1. A planilha está publicada (Arquivo > Compartilhar > Publicar na web)\n2. A aba se chama "${CONFIG.SHEET_NAME}"\n3. Os cabeçalhos estão corretos`);
-            }
+        } catch (e) {
+            console.warn('Cache inválido, recarregando...');
         }
+    }
+
+    try {
+        console.log('🔄 Buscando dados do Google Sheets...');
+        
+        const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${CONFIG.SHEET_NAME}`;
+        console.log('📡 URL:', url);
+        
+        const response = await fetch(url);
+        console.log('📡 Status:', response.status);
+        
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const text = await response.text();
+        console.log('📝 Resposta recebida, tamanho:', text.length);
+        
+        // Extrair o JSON da resposta
+        const jsonStr = extractJsonFromGoogleResponse(text);
+        
+        if (!jsonStr) {
+            console.error('❌ Não foi possível extrair JSON da resposta');
+            console.log('📄 Primeiros 500 caracteres da resposta:', text.substring(0, 500));
+            throw new Error('Não foi possível interpretar a resposta do Google Sheets');
+        }
+        
+        const json = JSON.parse(jsonStr);
+        
+        const rows = json.table.rows;
+        const headers = json.table.cols.map(col => col.label);
+        
+        // 🔍 DEBUG: Mostrar cabeçalhos e primeiras linhas
+        console.log('📋 CABEÇALHOS ENCONTRADOS:', headers);
+        console.log('📊 Total de linhas:', rows.length);
+        
+        if (rows.length > 0) {
+            console.log('📝 PRIMEIRA LINHA (dados brutos):', rows[0]);
+            console.log('📝 PRIMEIRA LINHA (valores):', rows[0].c.map(cell => cell ? cell.v : 'null'));
+        }
+        
+        if (rows.length === 0) {
+            throw new Error('A planilha está vazia!');
+        }
+        
+        // Converter para array de objetos
+        const data = rows.map(row => {
+            const obj = {};
+            row.c.forEach((cell, index) => {
+                const key = headers[index] || `col_${index}`;
+                obj[key] = cell ? cell.v : '';
+            });
+            return obj;
+        });
+
+        // 🔍 DEBUG: Mostrar os dados mapeados
+        console.log('📝 DADOS MAPEADOS (primeiros 3):', data.slice(0, 3));
+
+        // Mapear para o formato esperado
+        const mappedData = data.map(row => {
+            const getValue = (key) => {
+                const foundKey = Object.keys(row).find(k => k.toLowerCase() === key.toLowerCase());
+                return foundKey ? row[foundKey] : '';
+            };
+
+            const temasRaw = getValue('temas') || getValue('entregas') || '';
+            const temas = temasRaw ? temasRaw.split(/[|,;]\s*/).filter(t => t.trim()) : [];
+
+            const result = {
+                name: getValue('name') || getValue('nome') || '',
+                role: getValue('role') || getValue('cargo') || '',
+                gerencia: getValue('gerencia') || getValue('gerência') || '',
+                subSec: getValue('subSec') || getValue('subsec') || getValue('coordenacao') || '',
+                email: getValue('email') || getValue('e-mail') || '',
+                phone: getValue('phone') || getValue('telefone') || '',
+                avatar: getValue('avatar') || getValue('iniciais') || 'XX',
+                color: getValue('color') || getValue('cor') || 'slate',
+                temas: temas
+            };
+            
+            // 🔍 DEBUG: Mostrar cada registro mapeado
+            if (result.name) {
+                console.log('✅ Registro mapeado:', result);
+            }
+            
+            return result;
+        });
+
+        // Filtrar linhas vazias
+        const filteredData = mappedData.filter(p => p.name && p.name.trim() !== '');
+        
+        console.log(`📊 Total mapeado: ${mappedData.length}, filtrado: ${filteredData.length}`);
+        
+        if (filteredData.length === 0) {
+            // 🔍 DEBUG: Mostrar todos os dados para identificar o problema
+            console.log('⚠️ NENHUM REGISTRO COM NOME! Dados completos:', data);
+            throw new Error(`Nenhum profissional encontrado na planilha! Cabeçalhos encontrados: ${headers.join(', ')}`);
+        }
+
+        console.log(`✅ ${filteredData.length} profissionais carregados do Google Sheets`);
+
+        // Salvar no cache
+        localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify({
+            data: filteredData,
+            timestamp: Date.now()
+        }));
+
+        return filteredData;
+
+    } catch (error) {
+        console.error('❌ Erro ao carregar do Google Sheets:', error);
+        
+        // Tentar usar cache mesmo que expirado
+        const cached = localStorage.getItem(CONFIG.CACHE_KEY);
+        if (cached) {
+            try {
+                const cacheData = JSON.parse(cached);
+                if (cacheData.data && cacheData.data.length > 0) {
+                    console.log(`⚠️ Usando cache com ${cacheData.data.length} profissionais`);
+                    return cacheData.data;
+                }
+            } catch (e) {}
+        }
+        
+        throw error;
+    }
+}
 
         // ============================================
         // 3. ABRIR PLANILHA PARA EDIÇÃO
