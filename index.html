@@ -43,19 +43,6 @@
             box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.3);
         }
         
-        .debug-panel {
-            background: #1e293b;
-            color: #e2e8f0;
-            padding: 16px;
-            border-radius: 12px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            max-height: 400px;
-            overflow: auto;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-
         .toast {
             position: fixed;
             bottom: 80px;
@@ -83,24 +70,33 @@
             color: #60a5fa;
             text-decoration: underline;
         }
+
+        .error-panel {
+            background: #fef2f2;
+            border: 2px solid #fca5a5;
+            color: #991b1b;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .error-panel h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .error-panel p {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .error-panel code {
+            background: #fee2e2;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
-
-    <!-- Toast de Aviso -->
-    <div id="toast" class="toast">
-        <div class="flex items-start gap-3">
-            <span class="text-2xl">🔧</span>
-            <div>
-                <p class="font-semibold">Dica: Use um servidor local</p>
-                <p class="text-slate-300 text-xs mt-1">
-                    Para carregar os dados do Google Sheets, abra esta página com 
-                    <a href="#" onclick="showServerInstructions()" class="text-blue-400 hover:text-blue-300">Live Server</a> 
-                    ou <a href="#" onclick="showServerInstructions()" class="text-blue-400 hover:text-blue-300">http-server</a>.
-                </p>
-            </div>
-        </div>
-    </div>
 
     <!-- Header -->
     <header class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 text-white shadow-xl">
@@ -174,7 +170,7 @@
                 <div class="flex items-center gap-2 text-xs">
                     <span id="data-status" class="data-status text-slate-500 flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
-                        Modo offline
+                        Carregando...
                     </span>
                     <span id="cache-status" class="hidden"></span>
                 </div>
@@ -216,15 +212,6 @@
         <!-- VIEW 2: DIRETÓRIO DE EQUIPES E TEMAS -->
         <div id="view-directory" class="hidden space-y-12"></div>
 
-        <!-- Painel de Debug -->
-        <div id="debug-panel" class="hidden mt-8">
-            <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-bold text-slate-700">🔍 Debug - Dados Carregados</h3>
-                <button onclick="document.getElementById('debug-panel').classList.add('hidden')" class="text-xs text-slate-500 hover:text-slate-700">Fechar</button>
-            </div>
-            <div class="debug-panel" id="debug-content"></div>
-        </div>
-
     </main>
 
     <!-- Rodapé -->
@@ -256,67 +243,15 @@
             SHEET_ID: '1Vwp4olbNoo4cLfeI92OP3Qr20thXiRBQ2iJSGLfcS0g',
             SHEET_NAME: 'Dados',
             CACHE_KEY: 'senai_professionals_cache',
-            CACHE_EXPIRY: 5 * 60 * 1000, // 5 minutos
-            // Usar proxy CORS se estiver em file://
-            USE_PROXY: window.location.protocol === 'file:'
+            CACHE_EXPIRY: 2 * 60 * 1000, // 2 minutos
         };
 
         let professionals = [];
-        let allProfessionals = [];
 
         // ============================================
-        // 1. MOSTRAR INSTRUÇÕES DO SERVIDOR
-        // ============================================
-        function showServerInstructions() {
-            const content = document.getElementById('debug-content');
-            const panel = document.getElementById('debug-panel');
-            panel.classList.remove('hidden');
-            content.textContent = `
-📌 Como resolver o erro CORS:
-
-Você está abrindo o arquivo diretamente (file://).
-O navegador bloqueia requisições para o Google Sheets.
-
-🔧 SOLUÇÕES:
-
-1️⃣ VS Code com Live Server (RECOMENDADO)
-   - Instale a extensão "Live Server"
-   - Clique com botão direito no arquivo HTML
-   - Selecione "Open with Live Server"
-
-2️⃣ Python (se tiver Python)
-   python -m http.server 8000
-   Depois acesse: http://localhost:8000
-
-3️⃣ Node.js com http-server
-   npx http-server
-   Depois acesse: http://localhost:8080
-
-📱 APÓS CONFIGURAR:
-   - A página será aberta em http://localhost
-   - O Google Sheets funcionará normalmente
-   - Todos os dados aparecerão
-
-🔗 Link da planilha:
-   https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/edit
-            `;
-        }
-
-        // ============================================
-        // 2. CARREGAR DADOS DO GOOGLE SHEETS
+        // 1. CARREGAR DADOS DO GOOGLE SHEETS (SEM FALLBACK LOCAL)
         // ============================================
         async function loadFromGoogleSheets() {
-            // Se estiver em file://, mostrar aviso
-            if (window.location.protocol === 'file:') {
-                document.getElementById('toast').classList.add('show');
-                setTimeout(() => {
-                    document.getElementById('toast').classList.remove('show');
-                }, 8000);
-                
-                // Tentar mesmo assim com proxy CORS
-                console.warn('⚠️ Executando em file:// - usando proxy CORS');
-            }
-
             // Verificar cache primeiro
             const cached = localStorage.getItem(CONFIG.CACHE_KEY);
             if (cached) {
@@ -324,8 +259,6 @@ O navegador bloqueia requisições para o Google Sheets.
                     const cacheData = JSON.parse(cached);
                     if (Date.now() - cacheData.timestamp < CONFIG.CACHE_EXPIRY) {
                         console.log('📦 Usando dados em cache');
-                        document.getElementById('cache-status').innerHTML = '<span class="cache-badge">Cache</span>';
-                        document.getElementById('cache-status').classList.remove('hidden');
                         return cacheData.data;
                     }
                 } catch (e) {
@@ -336,34 +269,18 @@ O navegador bloqueia requisições para o Google Sheets.
             try {
                 console.log('🔄 Buscando dados do Google Sheets...');
                 
-                // Usar proxy CORS se necessário
-                let url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${CONFIG.SHEET_NAME}`;
-                
-                // Se estiver em file://, usar proxy CORS
-                if (window.location.protocol === 'file:') {
-                    url = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-                }
+                const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${CONFIG.SHEET_NAME}`;
+                console.log('📡 URL:', url);
                 
                 const response = await fetch(url);
+                console.log('📡 Status:', response.status);
+                
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 
-                let text = await response.text();
+                const text = await response.text();
+                console.log('📝 Resposta recebida, tamanho:', text.length);
                 
-                // Se veio do proxy, pode estar diferente
-                if (window.location.protocol === 'file:') {
-                    // O proxy retorna o JSON diretamente
-                    try {
-                        const json = JSON.parse(text);
-                        if (json.table) {
-                            // Já está no formato correto
-                            text = `google.visualization.Query.setResponse(${JSON.stringify(json)})`;
-                        }
-                    } catch (e) {
-                        // Não é JSON, continuar com o texto original
-                    }
-                }
-                
-                // Remover o prefixo do Google
+                // Processar a resposta do Google
                 let jsonText = text;
                 if (text.startsWith('/*O_o*/')) {
                     jsonText = text.substring(6);
@@ -373,12 +290,17 @@ O navegador bloqueia requisições para o Google Sheets.
                 }
                 
                 const json = JSON.parse(jsonText);
+                console.log('✅ JSON parseado com sucesso');
                 
                 const rows = json.table.rows;
                 const headers = json.table.cols.map(col => col.label);
                 
-                console.log('📋 Cabeçalhos encontrados:', headers);
+                console.log('📋 Cabeçalhos:', headers);
                 console.log('📊 Total de linhas:', rows.length);
+                
+                if (rows.length === 0) {
+                    throw new Error('A planilha está vazia!');
+                }
                 
                 // Converter para array de objetos
                 const data = rows.map(row => {
@@ -390,8 +312,6 @@ O navegador bloqueia requisições para o Google Sheets.
                     return obj;
                 });
 
-                console.log('📝 Primeiros dados:', data.slice(0, 3));
-
                 // Mapear para o formato esperado
                 const mappedData = data.map(row => {
                     const getValue = (key) => {
@@ -399,17 +319,17 @@ O navegador bloqueia requisições para o Google Sheets.
                         return foundKey ? row[foundKey] : '';
                     };
 
-                    const temasRaw = getValue('temas') || getValue('entregas') || getValue('responsabilidades') || '';
+                    const temasRaw = getValue('temas') || getValue('entregas') || '';
                     const temas = temasRaw ? temasRaw.split(/[|,;]\s*/).filter(t => t.trim()) : [];
 
                     return {
-                        name: getValue('name') || getValue('nome') || getValue('colaborador') || '',
-                        role: getValue('role') || getValue('cargo') || getValue('funcao') || '',
-                        gerencia: getValue('gerencia') || getValue('gerência') || getValue('area') || '',
-                        subSec: getValue('subSec') || getValue('subsec') || getValue('coordenacao') || getValue('coordenação') || '',
-                        email: getValue('email') || getValue('e-mail') || getValue('contato') || '',
-                        phone: getValue('phone') || getValue('telefone') || getValue('fone') || '',
-                        avatar: getValue('avatar') || getValue('iniciais') || getValue('sigla') || 'XX',
+                        name: getValue('name') || getValue('nome') || '',
+                        role: getValue('role') || getValue('cargo') || '',
+                        gerencia: getValue('gerencia') || getValue('gerência') || '',
+                        subSec: getValue('subSec') || getValue('subsec') || getValue('coordenacao') || '',
+                        email: getValue('email') || getValue('e-mail') || '',
+                        phone: getValue('phone') || getValue('telefone') || '',
+                        avatar: getValue('avatar') || getValue('iniciais') || 'XX',
                         color: getValue('color') || getValue('cor') || 'slate',
                         temas: temas
                     };
@@ -417,6 +337,10 @@ O navegador bloqueia requisições para o Google Sheets.
 
                 // Filtrar linhas vazias
                 const filteredData = mappedData.filter(p => p.name && p.name.trim() !== '');
+                
+                if (filteredData.length === 0) {
+                    throw new Error('Nenhum profissional encontrado na planilha!');
+                }
 
                 console.log(`✅ ${filteredData.length} profissionais carregados do Google Sheets`);
 
@@ -426,15 +350,6 @@ O navegador bloqueia requisições para o Google Sheets.
                     timestamp: Date.now()
                 }));
 
-                document.getElementById('cache-status').innerHTML = '<span class="online-badge">Online</span>';
-                document.getElementById('cache-status').classList.remove('hidden');
-                
-                // Atualizar status
-                document.getElementById('data-status').innerHTML = `
-                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                    ${filteredData.length} profissionais
-                `;
-                
                 return filteredData;
 
             } catch (error) {
@@ -445,437 +360,20 @@ O navegador bloqueia requisições para o Google Sheets.
                 if (cached) {
                     try {
                         const cacheData = JSON.parse(cached);
-                        console.log('⚠️ Usando cache expirado (fallback)');
-                        document.getElementById('cache-status').innerHTML = '<span class="cache-badge" style="background:#f59e0b;">Cache Offline</span>';
-                        document.getElementById('cache-status').classList.remove('hidden');
-                        
-                        document.getElementById('data-status').innerHTML = `
-                            <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
-                            ${cacheData.data.length} profissionais (cache)
-                        `;
-                        
-                        return cacheData.data;
+                        if (cacheData.data && cacheData.data.length > 0) {
+                            console.log(`⚠️ Usando cache com ${cacheData.data.length} profissionais`);
+                            return cacheData.data;
+                        }
                     } catch (e) {}
                 }
                 
-                // Último recurso: dados locais com todos os profissionais
-                console.warn('⚠️ Usando dados locais (emergência)');
-                const localData = getLocalData();
-                document.getElementById('data-status').innerHTML = `
-                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                    ${localData.length} profissionais (offline)
-                `;
-                return localData;
+                // Se não tem cache e não conseguiu carregar, mostrar erro
+                throw new Error(`Não foi possível carregar os dados da planilha.\n\nMotivo: ${error.message}\n\nVerifique se:\n1. A planilha está publicada (Arquivo > Compartilhar > Publicar na web)\n2. A aba se chama "${CONFIG.SHEET_NAME}"\n3. Os cabeçalhos estão corretos`);
             }
         }
 
         // ============================================
-        // 3. DADOS LOCAIS COMPLETOS (FALLBACK)
-        // ============================================
-        function getLocalData() {
-            // Todos os profissionais do código original
-            return [
-                {
-                    name: "Jeferson Leandro Mateucci",
-                    role: "Analista de Tecnologias Educacionais",
-                    gerencia: "Soluções Educacionais",
-                    subSec: "Coord. Tecnologias Educacionais",
-                    email: "jeferson.mateucci@senaicni.com.br",
-                    phone: "(061) 3317-9866",
-                    avatar: "JM",
-                    color: "emerald",
-                    temas: ["AR/VR (Realidade Aumentada e Virtual)", "Simuladores de Prática", "SENAI Experience", "Labs Virtuais"]
-                },
-                {
-                    name: "Luis Alberto Silva Monti",
-                    role: "Analista de Ambientes Imersivos",
-                    gerencia: "Soluções Educacionais",
-                    subSec: "Coord. Tecnologias Educacionais",
-                    email: "lmonti@senaicni.com.br",
-                    phone: "(061) 3317-9619",
-                    avatar: "LM",
-                    color: "emerald",
-                    temas: ["Gêmeos Digitais", "Simuladores de Prática", "Realidade Estendida (XR)", "Labs Virtuais"]
-                },
-                {
-                    name: "Elisie Coelho Lima",
-                    role: "Analista de Plataformas e Conteúdo",
-                    gerencia: "Soluções Educacionais",
-                    subSec: "Coord. Tecnologias Educacionais",
-                    email: "elisie@senaicni.com.br",
-                    phone: "(061) 3317-9156",
-                    avatar: "EC",
-                    color: "emerald",
-                    temas: ["SENAI Play", "Canais de Streaming", "Produção de Conteúdo Digital", "Microlearning"]
-                },
-                {
-                    name: "Fabio Lima de Deus",
-                    role: "Analista de Integração de Sistemas",
-                    gerencia: "Soluções Educacionais",
-                    subSec: "Coord. Tecnologias Educacionais",
-                    email: "fabio.deus@senaicni.com.br",
-                    phone: "(061) 3317-9774",
-                    avatar: "FD",
-                    color: "emerald",
-                    temas: ["Meu SENAI", "Autenticação de Usuários", "Integração de SGE e AVA", "Experiência de Usuários"]
-                },
-                {
-                    name: "Roziney Alencar Melo Weber",
-                    role: "Analista de Inovação Pedagógica",
-                    gerencia: "Soluções Educacionais",
-                    subSec: "Coord. Tecnologias Educacionais",
-                    email: "roziney.weber@senaicni.com.br",
-                    phone: "(061) 3317-8852",
-                    avatar: "RW",
-                    color: "emerald",
-                    temas: ["PRAIA", "Parcerias de Tecnologia de Base Nacional", "Inteligência Artificial na Educação"]
-                },
-                {
-                    name: "Germana Arcoverde Bezerra Zapata",
-                    role: "Analista do Instituto de Tecnologias Educacionais",
-                    gerencia: "Soluções Educacionais",
-                    subSec: "Coord. Tecnologias Educacionais",
-                    email: "gzapata@senaicni.com.br",
-                    phone: "(061) 3317-9530",
-                    avatar: "GZ",
-                    color: "emerald",
-                    temas: ["Instituto SESI SENAI de Tecnologias Educacionais", "Comunidades de Prática", "Pesquisas de Inovação"]
-                },
-                {
-                    name: "Frankwaine Pereira de Melo",
-                    role: "Analista de Parcerias do SITEC",
-                    gerencia: "Soluções Educacionais",
-                    subSec: "Coord. Tecnologias Educacionais",
-                    email: "frankwaine.melo@senaicni.com.br",
-                    phone: "(061) 3317-9395",
-                    avatar: "FM",
-                    color: "emerald",
-                    temas: ["SITEC", "Comunidades de Aprendizagem", "Conexão com Indústrias", "Projetos Tecnológicos"]
-                },
-                {
-                    name: "Edilson de Oliveira Caldas",
-                    role: "Analista de Convênios de Inovação",
-                    gerencia: "Soluções Educacionais",
-                    subSec: "Coord. Tecnologias Educacionais",
-                    email: "edilson.caldas@senaicni.com.br",
-                    phone: "(061) 3317-8975",
-                    avatar: "EC",
-                    color: "emerald",
-                    temas: ["Parcerias Educacionais e Tecnológicas", "Convênio Google", "Oficinas Google For Education"]
-                },
-                {
-                    name: "Bruno Silveira Duarte",
-                    role: "Analista de Infraestruturas de Apoio",
-                    gerencia: "Soluções Educacionais",
-                    subSec: "Coord. Tecnologias Educacionais",
-                    email: "bduarte@senaicni.com.br",
-                    phone: "(061) 3317-8338",
-                    avatar: "BD",
-                    color: "emerald",
-                    temas: ["Labs Virtuais de Apoio", "Hardware VR", "Kits Tecnológicos", "Suporte a Ambientes Virtuais"]
-                },
-                {
-                    name: "Giseli Almeida de Araujo",
-                    role: "Analista de Itinerários e Padrões de Cursos",
-                    gerencia: "Soluções Educacionais",
-                    subSec: "Coord. Qualidade Educacional",
-                    email: "giseli.araujo@senaicni.com.br",
-                    phone: "(061) 3317-9091",
-                    avatar: "GA",
-                    color: "indigo",
-                    temas: ["Itinerários Nacionais", "Perfis Profissionais de Cursos", "Desenho Curricular", "Padronização Pedagógica"]
-                },
-                {
-                    name: "Viviane Martins Macedo Grande Pousa",
-                    role: "Analista de Sistemas de Aprendizagem Virtual",
-                    gerencia: "Soluções Educacionais",
-                    subSec: "Coord. Qualidade Educacional",
-                    email: "viviane.pousa@senaicni.com.br",
-                    phone: "(061) 3317-8910",
-                    avatar: "VP",
-                    color: "indigo",
-                    temas: ["AVA SENAI - SGE", "Moodle", "Ambiente Virtual de Aprendizagem", "Parametrização Escolar"]
-                },
-                {
-                    name: "Laise Caldeira Pedroso",
-                    role: "Analista de Recursos Didáticos e Livros",
-                    gerencia: "Soluções Educacionais",
-                    subSec: "Coord. Qualidade Educacional",
-                    email: "laise.pedroso@senaicni.com.br",
-                    phone: "(061) 3317-9288",
-                    avatar: "LP",
-                    color: "indigo",
-                    temas: ["Livros Didáticos do SENAI", "Livros Técnicos", "Guia do Aluno", "Recursos Instrucionais"]
-                },
-                {
-                    name: "Tricia Miranda Araujo",
-                    role: "Analista de Competições Profissionais",
-                    gerencia: "Soluções Educacionais",
-                    subSec: "Coord. Qualidade Educacional",
-                    email: "tricia@senaicni.com.br",
-                    phone: "(061) 3317-8937",
-                    avatar: "TA",
-                    color: "indigo",
-                    temas: ["WorldSkills Brasil", "Olimpíada do Conhecimento", "Treinamento de Competidores de Elite"]
-                },
-                {
-                    name: "Daniel Brito do Nascimento",
-                    role: "Analista de Programas de Empreendedorismo",
-                    gerencia: "Soluções Educacionais",
-                    subSec: "Coord. Qualidade Educacional",
-                    email: "daniel.nascimento@senaicni.com.br",
-                    phone: "(061) 3317-9693",
-                    avatar: "DN",
-                    color: "indigo",
-                    temas: ["Saga SENAI de Inovação", "Projetos de Alunos (Inova)", "Empreendedorismo Estudantil"]
-                },
-                {
-                    name: "Anna Christina Theodora Aun de Azevedo Nascimento",
-                    role: "Analista de Padrões Físicos de Aprendizagem",
-                    gerencia: "Soluções Educacionais",
-                    subSec: "Coord. Qualidade Educacional",
-                    email: "anna.nascimento@senaicni.com.br",
-                    phone: "(061) 3317-8939",
-                    avatar: "AN",
-                    color: "indigo",
-                    temas: ["Padrão Arquitetônico de Escolas", "Layouts de Laboratório", "Rede SENAI Lab", "Infraestrutura Física Educacional"]
-                },
-                {
-                    name: "Decio Campos da Silva",
-                    role: "Analista de Competições FRC",
-                    gerencia: "Soluções Educacionais",
-                    subSec: "Coord. Qualidade Educacional",
-                    email: "decio.silva@senaicni.com.br",
-                    phone: "(061) 3317-9726",
-                    avatar: "DS",
-                    color: "indigo",
-                    temas: ["FRC (SESI/SENAI Robotics)", "Robótica Estudantil", "Competições de Robótica", "Parcerias de Competição"]
-                },
-                {
-                    name: "Bibiana Karla Azevedo Lima",
-                    role: "Analista de Produto - Plataformas B2C",
-                    gerencia: "Negócios Educacionais",
-                    subSec: "",
-                    email: "bibiana.lima@senaicni.com.br",
-                    phone: "(061) 3317-8928",
-                    avatar: "BL",
-                    color: "blue",
-                    temas: ["Futuro.digital", "E-commerce de Cursos", "Captação de Alunos Pessoa Física", "Geração de Vendas B2C"]
-                },
-                {
-                    name: "Aroldo Cardozo de Alvarenga Paulino",
-                    role: "Analista de Canais de Negócios Digitais",
-                    gerencia: "Negócios Educacionais",
-                    subSec: "",
-                    email: "aroldo.paulino@senaicni.com.br",
-                    phone: "(061) 3317-9381",
-                    avatar: "AP",
-                    color: "blue",
-                    temas: ["Mundo SENAI", "Plataformas Digitais de Vendas", "Integração Comercial", "Sinalização de Leads"]
-                },
-                {
-                    name: "Claudia Maria Mendes de Araujo",
-                    role: "Analista Comercial de Contas Corporativas",
-                    gerencia: "Negócios Educacionais",
-                    subSec: "",
-                    email: "cmmaraujo@senaicni.com.br",
-                    phone: "(061) 3317-8851",
-                    avatar: "CA",
-                    color: "blue",
-                    temas: ["Contas Nacionais", "Ações PJ de Base Nacional", "Vendas Corporativas B2B"]
-                },
-                {
-                    name: "Gislaine Luciana Martins Bruzzi",
-                    role: "Analista de Relacionamento e Parcerias",
-                    gerencia: "Negócios Educacionais",
-                    subSec: "",
-                    email: "gbruzzi@senaicni.com.br",
-                    phone: "(061) 3317-9172",
-                    avatar: "GB",
-                    color: "blue",
-                    temas: ["PROPAG", "Certificações de Parceiros", "SESI Integração Nacional", "Geração de Leads Corporativos"]
-                },
-                {
-                    name: "Jefferson Camargo Froes",
-                    role: "Analista Executivo de Projetos Setoriais",
-                    gerencia: "Negócios Educacionais",
-                    subSec: "",
-                    email: "jefferson.froes@senaicni.com.br",
-                    phone: "(061) 3317-8816",
-                    avatar: "JF",
-                    color: "blue",
-                    temas: ["Brasil Mais Produtivo", "Melhoria da Produtividade de Pequenas Empresas", "Venda de Soluções de Capacitação"]
-                },
-                {
-                    name: "Katiusce Elixece da Rosa Arruda",
-                    role: "Analista de Expansão de Ensino Médio",
-                    gerencia: "Negócios Educacionais",
-                    subSec: "",
-                    email: "katiusce.arruda@senaicni.com.br",
-                    phone: "(061) 3317-9859",
-                    avatar: "KA",
-                    color: "blue",
-                    temas: ["Ensino Médio Técnico Integrado", "Projetos de Larga Escala de Ensino Médio", "Expansão de Matrículas"]
-                },
-                {
-                    name: "Marcelo Miguel Steffen",
-                    role: "Consultor de Inteligência e Modelagem Educacional",
-                    gerencia: "Negócios Educacionais",
-                    subSec: "",
-                    email: "marcelo.steffen@senaicni.com.br",
-                    phone: "(061) 3317-9838",
-                    avatar: "MS",
-                    color: "blue",
-                    temas: ["UniSENAI", "Modelagem de Aprendizagem Industrial", "Programas Setoriais de Capacitação", "Parcerias de Mercado"]
-                },
-                {
-                    name: "Monique Oliveira Ferreira",
-                    role: "Analista de Inteligência de Mercado",
-                    gerencia: "Negócios Educacionais",
-                    subSec: "",
-                    email: "monique.ferreira@senaicni.com.br",
-                    phone: "(011) 3040-4668",
-                    avatar: "MO",
-                    color: "blue",
-                    temas: ["Inteligência de Mercado", "Pesquisa de Demanda Industrial", "Análise de Concorrência", "Precificação de Cursos"]
-                },
-                {
-                    name: "Vanessa Venancio Pappetti Canhete",
-                    role: "Analista de Contratos e Convênios de Base Nacional",
-                    gerencia: "Negócios Educacionais",
-                    subSec: "",
-                    email: "vcanhete@senaicni.com.br",
-                    phone: "(061) 3317-9679",
-                    avatar: "VC",
-                    color: "blue",
-                    temas: ["Contratos de Convênio de Base Nacional", "Contratos Globais PJ", "Faturamento Corporativo", "Relações com Grandes Grupos Econômicos"]
-                },
-                {
-                    name: "Walberth Rogerio de Souza Oliveira",
-                    role: "Consultor Técnico de Processos Educacionais Nacionais",
-                    gerencia: "Negócios Educacionais",
-                    subSec: "",
-                    email: "woliveira@senaicni.com.br",
-                    phone: "(061) 3317-9763",
-                    avatar: "WO",
-                    color: "blue",
-                    temas: ["Certificação Profissional e de Pessoas", "Aprendizagem Industrial", "Sistema de Avaliação da Educação Profissional", "Itinerários Nacionais", "Metodologia SENAI de Educação Profissional", "Apoios Financeiros OSC nº 03/2016", "RCA 2024"]
-                },
-                {
-                    name: "Rosamaria Capo Sobral",
-                    role: "Especialista em Diretrizes Metodológicas Integradas",
-                    gerencia: "Operações Educacionais",
-                    subSec: "",
-                    email: "rsobral@senaicni.com.br",
-                    phone: "(061) 3317-9302",
-                    avatar: "RS",
-                    color: "amber",
-                    temas: ["Metodologia SENAI de Educação Profissional (MSEP)", "Processo e Metodologia Integrados", "Padronização Metodológica"]
-                },
-                {
-                    name: "Hugo Nakatani",
-                    role: "Analista de Processos e Gestão de Indicadores",
-                    gerencia: "Operações Educacionais",
-                    subSec: "",
-                    email: "hnakatani@senaicni.com.br",
-                    phone: "(061) 3317-8856",
-                    avatar: "HN",
-                    color: "amber",
-                    temas: ["SAGE", "SGE", "SGD de Processos", "Sistemas Acadêmicos Integrados"]
-                },
-                {
-                    name: "Elianice Silva Castro",
-                    role: "Analista de Otimização Operacional",
-                    gerencia: "Operações Educacionais",
-                    subSec: "",
-                    email: "elianice.castro@senaicni.com.br",
-                    phone: "(061) 3317-9703",
-                    avatar: "EC",
-                    color: "amber",
-                    temas: ["Lean Office", "Cultura de Melhoria Contínua", "Eliminação de Desperdícios Organizacionais"]
-                },
-                {
-                    name: "Sandro Portela Ormond",
-                    role: "Analista de Diretrizes Educacionais",
-                    gerencia: "Operações Educacionais",
-                    subSec: "",
-                    email: "sormond@senaicni.com.br",
-                    phone: "(061) 3317-8945",
-                    avatar: "SO",
-                    color: "amber",
-                    temas: ["Ensino Superior", "Ensino Médio", "Diretrizes Acadêmicas", "Regulamentos do Ensino"]
-                },
-                {
-                    name: "Cristiano Vieira de Pinho",
-                    role: "Consultor de Processos Lean",
-                    gerencia: "Operações Educacionais",
-                    subSec: "",
-                    email: "cristiano.pinho@senaicni.com.br",
-                    phone: "(061) 3317-8915",
-                    avatar: "CP",
-                    color: "amber",
-                    temas: ["Lean Educacional", "Otimização de rotinas acadêmicas", "Metodologias Lean aplicadas a Escolas"]
-                },
-                {
-                    name: "Carla Abigail Araujo",
-                    role: "Analista de Sistemas e Suporte",
-                    gerencia: "Operações Educacionais",
-                    subSec: "",
-                    email: "carla.araujo@senaicni.com.br",
-                    phone: "(061) 3317-9742",
-                    avatar: "CA",
-                    color: "amber",
-                    temas: ["AVA", "Rubeus CRM Educacional", "SGD de Processos", "Sistemas de Suporte Acadêmico"]
-                },
-                {
-                    name: "Ana Maria Sousa da Silva",
-                    role: "Analista de Indicadores Escolares",
-                    gerencia: "Operações Educacionais",
-                    subSec: "",
-                    email: "ana.sousa@senaicni.com.br",
-                    phone: "Sem Telefone",
-                    avatar: "AM",
-                    color: "amber",
-                    temas: ["Gestão de indicadores pedagógicos", "SAGE", "SGE", "Decisões baseadas em dados educacionais"]
-                },
-                {
-                    name: "Fernanda Marques de Oliveira",
-                    role: "Analista de Auditorias de Aprendizagem Industrial",
-                    gerencia: "Operações Educacionais",
-                    subSec: "",
-                    email: "fernanda.oliveira@senaicni.com.br",
-                    phone: "(061) 3317-8983",
-                    avatar: "FO",
-                    color: "amber",
-                    temas: ["PSAI (Processo de Supervisão de Aprendizagem Industrial)", "Auditorias Regionais de Qualidade", "Acompanhamento de Docência"]
-                },
-                {
-                    name: "Sinara Sant Anna Celistre",
-                    role: "Coordenadora de Capacitações Docentes",
-                    gerencia: "Operações Educacionais",
-                    subSec: "",
-                    email: "sinara.celistre@senaicni.com.br",
-                    phone: "(061) 3317-9706",
-                    avatar: "SC",
-                    color: "amber",
-                    temas: ["Capacitação docente", "Itinerário de capacitação e jornada pedagógica", "Universidade Corporativa", "Formação de Professores"]
-                },
-                {
-                    name: "Antonio Braz Lopes Filho",
-                    role: "Analista de Projetos de Inovação Prática",
-                    gerencia: "Operações Educacionais",
-                    subSec: "",
-                    email: "antonio.lopes@senaicni.com.br",
-                    phone: "(061) 3317-9699",
-                    avatar: "AL",
-                    color: "amber",
-                    temas: ["Grand Prix e Integra", "Saga SENAI de Inovação", "Projetos Práticos de Alunos"]
-                }
-            ];
-        }
-
-        // ============================================
-        // 4. ABRIR PLANILHA PARA EDIÇÃO
+        // 2. ABRIR PLANILHA PARA EDIÇÃO
         // ============================================
         function openEditSheet() {
             const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/edit`;
@@ -883,7 +381,7 @@ O navegador bloqueia requisições para o Google Sheets.
         }
 
         // ============================================
-        // 5. RENDERIZAR ORGANOGRAMA
+        // 3. RENDERIZAR ORGANOGRAMA
         // ============================================
         function renderHierarchy() {
             const container = document.getElementById('view-hierarchy');
@@ -1034,7 +532,7 @@ O navegador bloqueia requisições para o Google Sheets.
         }
 
         // ============================================
-        // 6. RENDERIZAR DIRETÓRIO
+        // 4. RENDERIZAR DIRETÓRIO
         // ============================================
         function renderDirectory() {
             const container = document.getElementById('view-directory');
@@ -1135,7 +633,7 @@ O navegador bloqueia requisições para o Google Sheets.
         }
 
         // ============================================
-        // 7. CRIAR CARD DE PROFISSIONAL
+        // 5. CRIAR CARD DE PROFISSIONAL
         // ============================================
         function createProfessionalCard(prof) {
             const avatarBg = {
@@ -1203,7 +701,7 @@ O navegador bloqueia requisições para o Google Sheets.
         }
 
         // ============================================
-        // 8. FUNÇÕES DE BUSCA E FILTRO
+        // 6. FUNÇÕES DE BUSCA E FILTRO
         // ============================================
         function filterProfessionals() {
             const input = document.getElementById('search-input');
@@ -1300,16 +798,20 @@ O navegador bloqueia requisições para o Google Sheets.
         }
 
         // ============================================
-        // 9. INICIALIZAÇÃO
+        // 7. INICIALIZAÇÃO
         // ============================================
         async function init() {
             try {
                 const data = await loadFromGoogleSheets();
                 professionals = data;
-                allProfessionals = data;
                 
                 document.getElementById('total-professionals').textContent = professionals.length;
                 document.getElementById('last-update').textContent = new Date().toLocaleString('pt-BR');
+                
+                document.getElementById('data-status').innerHTML = `
+                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    ${professionals.length} profissionais
+                `;
                 
                 renderHierarchy();
                 renderDirectory();
@@ -1323,17 +825,29 @@ O navegador bloqueia requisições para o Google Sheets.
                 
                 console.log('✅ Aplicação inicializada com sucesso!');
                 console.log(`📊 Total de profissionais: ${professionals.length}`);
+                
             } catch (error) {
                 console.error('❌ Erro na inicialização:', error);
+                
                 document.getElementById('loading-state').innerHTML = `
-                    <div class="text-center">
-                        <div class="text-red-500 text-6xl mb-4">⚠️</div>
-                        <p class="text-slate-700 font-medium">Erro ao carregar os dados</p>
-                        <p class="text-slate-500 text-sm mt-2">${error.message || 'Erro desconhecido'}</p>
-                        <button onclick="location.reload()" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                    <div class="error-panel max-w-2xl mx-auto">
+                        <div class="text-5xl mb-4">⚠️</div>
+                        <h3>Erro ao carregar os dados</h3>
+                        <p>${error.message || 'Erro desconhecido'}</p>
+                        <br>
+                        <div class="text-left text-sm bg-white/50 p-4 rounded-lg">
+                            <p class="font-semibold">🔧 Verifique:</p>
+                            <p>1. A planilha está publicada?</p>
+                            <p class="text-xs text-slate-600 ml-4">Arquivo > Compartilhar > Publicar na web</p>
+                            <p>2. A aba se chama <code>${CONFIG.SHEET_NAME}</code>?</p>
+                            <p>3. Os cabeçalhos estão corretos?</p>
+                            <p class="text-xs text-slate-600 ml-4">name, role, gerencia, email, phone, temas</p>
+                        </div>
+                        <br>
+                        <button onclick="location.reload()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors mr-2">
                             Tentar novamente
                         </button>
-                        <button onclick="openEditSheet()" class="mt-4 ml-2 bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition-colors">
+                        <button onclick="openEditSheet()" class="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition-colors">
                             Abrir Planilha
                         </button>
                     </div>
