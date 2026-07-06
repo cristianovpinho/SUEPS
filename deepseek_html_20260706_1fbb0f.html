@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Atendimento e Organograma - SENAI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .loading-spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .edit-btn {
+            transition: all 0.3s ease;
+        }
+        .edit-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.3);
+        }
+        
+        .debug-panel {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: #1e293b;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            max-width: 350px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            z-index: 100;
+            display: none;
+            border-left: 4px solid #f59e0b;
+        }
+        .toast.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast a {
+            color: #60a5fa;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Toast de Aviso -->
+    <div id="toast" class="toast">
+        <div class="flex items-start gap-3">
+            <span class="text-2xl">🔧</span>
+            <div>
+                <p class="font-semibold">Dica: Use um servidor local</p>
+                <p class="text-slate-300 text-xs mt-1">
+                    Para carregar os dados do Google Sheets, abra esta página com 
+                    <a href="#" onclick="showServerInstructions()" class="text-blue-400 hover:text-blue-300">Live Server</a> 
+                    ou <a href="#" onclick="showServerInstructions()" class="text-blue-400 hover:text-blue-300">http-server</a>.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 text-white shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div>
+                    <span class="bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">
+                        SENAI - Confederação Nacional da Indústria
+                    </span>
+                    <h1 class="text-3xl sm:text-4xl font-extrabold mt-2 tracking-tight">
+                        Superintendência de Educação Profissional e Superior
+                    </h1>
+                    <p class="text-blue-100/80 mt-2 text-sm sm:text-base max-w-2xl">
+                        Encontre os responsáveis exatos pelas principais entregas do SENAI através do buscador de temas ou navegue pelas divisões operacionais.
+                    </p>
+                </div>
+                <div class="flex items-center gap-4 bg-white/10 p-4 rounded-xl backdrop-blur-sm self-start md:self-auto">
+                    <div class="p-3 bg-blue-600 rounded-lg">
+                        <i data-lucide="users" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold" id="total-professionals">0</div>
+                        <div class="text-xs text-blue-200">Profissionais Oficiais</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Loading State -->
+    <div id="loading-state" class="flex flex-col items-center justify-center py-20">
+        <div class="loading-spinner"></div>
+        <p class="text-slate-500 mt-4 text-sm">Carregando dados dos colaboradores...</p>
+        <p class="text-slate-400 text-xs mt-2">Conectando ao Google Sheets</p>
+    </div>
+
+    <!-- Barra de Busca -->
+    <section id="search-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 w-full z-10 hidden">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-100 p-6">
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <i data-lucide="search" class="h-6 w-6 text-indigo-500"></i>
+                </div>
+                <input 
+                    type="text" 
+                    id="search-input"
+                    placeholder="Pesquise por temas ou entregas (Ex: MSEP, PSAI, WorldSkills, Futuro.digital, etc.)" 
+                    class="block w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 text-slate-900 placeholder-slate-400 transition-all text-base sm:text-lg"
+                    onkeyup="filterProfessionals()"
+                >
+                <button 
+                    id="clear-search"
+                    onclick="clearSearch()"
+                    class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 hidden"
+                >
+                    <i data-lucide="x-circle" class="h-6 w-6"></i>
+                </button>
+            </div>
+            
+            <div class="mt-4 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mr-2">Entregas Rápidas:</span>
+                    <button onclick="setSearch('MSEP')" class="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors px-3 py-1.5 rounded-full font-medium">MSEP</button>
+                    <button onclick="setSearch('WorldSkills')" class="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors px-3 py-1.5 rounded-full font-medium">WorldSkills</button>
+                    <button onclick="setSearch('Gêmeos Digitais')" class="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors px-3 py-1.5 rounded-full font-medium">Gêmeos Digitais</button>
+                    <button onclick="setSearch('Futuro.digital')" class="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors px-3 py-1.5 rounded-full font-medium">Futuro.digital</button>
+                    <button onclick="setSearch('Contas Nacionais')" class="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors px-3 py-1.5 rounded-full font-medium">Contas Nacionais</button>
+                    <button onclick="setSearch('Lean')" class="text-xs bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors px-3 py-1.5 rounded-full font-medium">Lean / Otimização</button>
+                    <button onclick="setSearch('PSAI')" class="text-xs bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors px-3 py-1.5 rounded-full font-medium">PSAI</button>
+                </div>
+                <div class="flex items-center gap-2 text-xs">
+                    <span id="data-status" class="data-status text-slate-500 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                        Modo offline
+                    </span>
+                    <span id="cache-status" class="hidden"></span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+        
+        <div id="results-message" class="hidden mb-6 bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-500 text-white p-2 rounded-lg">
+                    <i data-lucide="filter" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-indigo-950">Filtro de Entregas Ativo</h3>
+                    <p class="text-sm text-indigo-700" id="results-count">Mostrando colaboradores associados ao tema.</p>
+                </div>
+            </div>
+            <button onclick="clearSearch()" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold underline">Ver Todos</button>
+        </div>
+
+        <!-- Abas de Navegação -->
+        <div class="border-b border-slate-200 mb-8" id="view-tabs">
+            <nav class="flex space-x-8" aria-label="Tabs">
+                <button onclick="switchView('hierarchy')" id="tab-hierarchy" class="border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base flex items-center gap-2">
+                    <i data-lucide="git-branch" class="w-5 h-5"></i> Organograma de Gestão
+                </button>
+                <button onclick="switchView('directory')" id="tab-directory" class="border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base flex items-center gap-2">
+                    <i data-lucide="contact-2" class="w-5 h-5"></i> Diretório de Entregas e Equipes
+                </button>
+            </nav>
+        </div>
+
+        <!-- VIEW 1: ORGANOGRAMA DE GESTÃO -->
+        <div id="view-hierarchy" class="space-y-12"></div>
+
+        <!-- VIEW 2: DIRETÓRIO DE EQUIPES E TEMAS -->
+        <div id="view-directory" class="hidden space-y-12"></div>
+
+        <!-- Painel de Debug -->
+        <div id="debug-panel" class="hidden mt-8">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-bold text-slate-700">🔍 Debug - Dados Carregados</h3>
+                <button onclick="document.getElementById('debug-panel').classList.add('hidden')" class="text-xs text-slate-500 hover:text-slate-700">Fechar</button>
+            </div>
+            <div class="debug-panel" id="debug-content"></div>
+        </div>
+
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="bg-slate-950 text-slate-400 py-8 border-t border-slate-800 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:flex sm:justify-between sm:items-center">
+            <p class="text-sm">
+                &copy; 2026 Superintendência de Educação Profissional e Superior - Matriz SENAI CNI.
+            </p>
+            <p class="text-xs text-slate-500 mt-2 sm:mt-0 flex items-center gap-2">
+                <span>Dados carregados do Google Sheets</span>
+                <span class="w-1 h-1 rounded-full bg-slate-600"></span>
+                <span>Última atualização: <span id="last-update">-</span></span>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Botão Flutuante: Editar Dados -->
+    <button onclick="openEditSheet()" class="edit-btn fixed bottom-6 right-6 bg-indigo-600 text-white px-5 py-3 rounded-full shadow-lg hover:bg-indigo-700 transition-all flex items-center gap-2 z-50">
+        <i data-lucide="pencil" class="w-5 h-5"></i>
+        <span class="text-sm font-medium hidden sm:inline">Editar Dados</span>
+        <span class="text-[10px] bg-indigo-400/30 px-2 py-0.5 rounded-full hidden sm:inline">Planilha</span>
+    </button>
+
+    <script>
+        // ============================================
+        // CONFIGURAÇÃO - ID DA SUA PLANILHA
+        // ============================================
+        const CONFIG = {
+            SHEET_ID: '1Vwp4olbNoo4cLfeI92OP3Qr20thXiRBQ2iJSGLfcS0g',
+            SHEET_NAME: 'Dados',
+            CACHE_KEY: 'senai_professionals_cache',
+            CACHE_EXPIRY: 5 * 60 * 1000, // 5 minutos
+            // Usar proxy CORS se estiver em file://
+            USE_PROXY: window.location.protocol === 'file:'
+        };
+
+        let professionals = [];
+        let allProfessionals = [];
+
+        // ============================================
+        // 1. MOSTRAR INSTRUÇÕES DO SERVIDOR
+        // ============================================
+        function showServerInstructions() {
+            const content = document.getElementById('debug-content');
+            const panel = document.getElementById('debug-panel');
+            panel.classList.remove('hidden');
+            content.textContent = `
+📌 Como resolver o erro CORS:
+
+Você está abrindo o arquivo diretamente (file://).
+O navegador bloqueia requisições para o Google Sheets.
+
+🔧 SOLUÇÕES:
+
+1️⃣ VS Code com Live Server (RECOMENDADO)
+   - Instale a extensão "Live Server"
+   - Clique com botão direito no arquivo HTML
+   - Selecione "Open with Live Server"
+
+2️⃣ Python (se tiver Python)
+   python -m http.server 8000
+   Depois acesse: http://localhost:8000
+
+3️⃣ Node.js com http-server
+   npx http-server
+   Depois acesse: http://localhost:8080
+
+📱 APÓS CONFIGURAR:
+   - A página será aberta em http://localhost
+   - O Google Sheets funcionará normalmente
+   - Todos os dados aparecerão
+
+🔗 Link da planilha:
+   https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/edit
+            `;
+        }
+
+        // ============================================
+        // 2. CARREGAR DADOS DO GOOGLE SHEETS
+        // ============================================
+        async function loadFromGoogleSheets() {
+            // Se estiver em file://, mostrar aviso
+            if (window.location.protocol === 'file:') {
+                document.getElementById('toast').classList.add('show');
+                setTimeout(() => {
+                    document.getElementById('toast').classList.remove('show');
+                }, 8000);
+                
+                // Tentar mesmo assim com proxy CORS
+                console.warn('⚠️ Executando em file:// - usando proxy CORS');
+            }
+
+            // Verificar cache primeiro
+            const cached = localStorage.getItem(CONFIG.CACHE_KEY);
+            if (cached) {
+                try {
+                    const cacheData = JSON.parse(cached);
+                    if (Date.now() - cacheData.timestamp < CONFIG.CACHE_EXPIRY) {
+                        console.log('📦 Usando dados em cache');
+                        document.getElementById('cache-status').innerHTML = '<span class="cache-badge">Cache</span>';
+                        document.getElementById('cache-status').classList.remove('hidden');
+                        return cacheData.data;
+                    }
+                } catch (e) {
+                    console.warn('Cache inválido, recarregando...');
+                }
+            }
+
+            try {
+                console.log('🔄 Buscando dados do Google Sheets...');
+                
+                // Usar proxy CORS se necessário
+                let url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${CONFIG.SHEET_NAME}`;
+                
+                // Se estiver em file://, usar proxy CORS
+                if (window.location.protocol === 'file:') {
+                    url = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                }
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                let text = await response.text();
+                
+                // Se veio do proxy, pode estar diferente
+                if (window.location.protocol === 'file:') {
+                    // O proxy retorna o JSON diretamente
+                    try {
+                        const json = JSON.parse(text);
+                        if (json.table) {
+                            // Já está no formato correto
+                            text = `google.visualization.Query.setResponse(${JSON.stringify(json)})`;
+                        }
+                    } catch (e) {
+                        // Não é JSON, continuar com o texto original
+                    }
+                }
+                
+                // Remover o prefixo do Google
+                let jsonText = text;
+                if (text.startsWith('/*O_o*/')) {
+                    jsonText = text.substring(6);
+                }
+                if (jsonText.startsWith('google.visualization.Query.setResponse(')) {
+                    jsonText = jsonText.substring(40, jsonText.length - 2);
+                }
+                
+                const json = JSON.parse(jsonText);
+                
+                const rows = json.table.rows;
+                const headers = json.table.cols.map(col => col.label);
+                
+                console.log('📋 Cabeçalhos encontrados:', headers);
+                console.log('📊 Total de linhas:', rows.length);
+                
+                // Converter para array de objetos
+                const data = rows.map(row => {
+                    const obj = {};
+                    row.c.forEach((cell, index) => {
+                        const key = headers[index] || `col_${index}`;
+                        obj[key] = cell ? cell.v : '';
+                    });
+                    return obj;
+                });
+
+                console.log('📝 Primeiros dados:', data.slice(0, 3));
+
+                // Mapear para o formato esperado
+                const mappedData = data.map(row => {
+                    const getValue = (key) => {
+                        const foundKey = Object.keys(row).find(k => k.toLowerCase() === key.toLowerCase());
+                        return foundKey ? row[foundKey] : '';
+                    };
+
+                    const temasRaw = getValue('temas') || getValue('entregas') || getValue('responsabilidades') || '';
+                    const temas = temasRaw ? temasRaw.split(/[|,;]\s*/).filter(t => t.trim()) : [];
+
+                    return {
+                        name: getValue('name') || getValue('nome') || getValue('colaborador') || '',
+                        role: getValue('role') || getValue('cargo') || getValue('funcao') || '',
+                        gerencia: getValue('gerencia') || getValue('gerência') || getValue('area') || '',
+                        subSec: getValue('subSec') || getValue('subsec') || getValue('coordenacao') || getValue('coordenação') || '',
+                        email: getValue('email') || getValue('e-mail') || getValue('contato') || '',
+                        phone: getValue('phone') || getValue('telefone') || getValue('fone') || '',
+                        avatar: getValue('avatar') || getValue('iniciais') || getValue('sigla') || 'XX',
+                        color: getValue('color') || getValue('cor') || 'slate',
+                        temas: temas
+                    };
+                });
+
+                // Filtrar linhas vazias
+                const filteredData = mappedData.filter(p => p.name && p.name.trim() !== '');
+
+                console.log(`✅ ${filteredData.length} profissionais carregados do Google Sheets`);
+
+                // Salvar no cache
+                localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify({
+                    data: filteredData,
+                    timestamp: Date.now()
+                }));
+
+                document.getElementById('cache-status').innerHTML = '<span class="online-badge">Online</span>';
+                document.getElementById('cache-status').classList.remove('hidden');
+                
+                // Atualizar status
+                document.getElementById('data-status').innerHTML = `
+                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    ${filteredData.length} profissionais
+                `;
+                
+                return filteredData;
+
+            } catch (error) {
+                console.error('❌ Erro ao carregar do Google Sheets:', error);
+                
+                // Tentar usar cache mesmo que expirado
+                const cached = localStorage.getItem(CONFIG.CACHE_KEY);
+                if (cached) {
+                    try {
+                        const cacheData = JSON.parse(cached);
+                        console.log('⚠️ Usando cache expirado (fallback)');
+                        document.getElementById('cache-status').innerHTML = '<span class="cache-badge" style="background:#f59e0b;">Cache Offline</span>';
+                        document.getElementById('cache-status').classList.remove('hidden');
+                        
+                        document.getElementById('data-status').innerHTML = `
+                            <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                            ${cacheData.data.length} profissionais (cache)
+                        `;
+                        
+                        return cacheData.data;
+                    } catch (e) {}
+                }
+                
+                // Último recurso: dados locais com todos os profissionais
+                console.warn('⚠️ Usando dados locais (emergência)');
+                const localData = getLocalData();
+                document.getElementById('data-status').innerHTML = `
+                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                    ${localData.length} profissionais (offline)
+                `;
+                return localData;
+            }
+        }
+
+        // ============================================
+        // 3. DADOS LOCAIS COMPLETOS (FALLBACK)
+        // ============================================
+        function getLocalData() {
+            // Todos os profissionais do código original
+            return [
+                {
+                    name: "Jeferson Leandro Mateucci",
+                    role: "Analista de Tecnologias Educacionais",
+                    gerencia: "Soluções Educacionais",
+                    subSec: "Coord. Tecnologias Educacionais",
+                    email: "jeferson.mateucci@senaicni.com.br",
+                    phone: "(061) 3317-9866",
+                    avatar: "JM",
+                    color: "emerald",
+                    temas: ["AR/VR (Realidade Aumentada e Virtual)", "Simuladores de Prática", "SENAI Experience", "Labs Virtuais"]
+                },
+                {
+                    name: "Luis Alberto Silva Monti",
+                    role: "Analista de Ambientes Imersivos",
+                    gerencia: "Soluções Educacionais",
+                    subSec: "Coord. Tecnologias Educacionais",
+                    email: "lmonti@senaicni.com.br",
+                    phone: "(061) 3317-9619",
+                    avatar: "LM",
+                    color: "emerald",
+                    temas: ["Gêmeos Digitais", "Simuladores de Prática", "Realidade Estendida (XR)", "Labs Virtuais"]
+                },
+                {
+                    name: "Elisie Coelho Lima",
+                    role: "Analista de Plataformas e Conteúdo",
+                    gerencia: "Soluções Educacionais",
+                    subSec: "Coord. Tecnologias Educacionais",
+                    email: "elisie@senaicni.com.br",
+                    phone: "(061) 3317-9156",
+                    avatar: "EC",
+                    color: "emerald",
+                    temas: ["SENAI Play", "Canais de Streaming", "Produção de Conteúdo Digital", "Microlearning"]
+                },
+                {
+                    name: "Fabio Lima de Deus",
+                    role: "Analista de Integração de Sistemas",
+                    gerencia: "Soluções Educacionais",
+                    subSec: "Coord. Tecnologias Educacionais",
+                    email: "fabio.deus@senaicni.com.br",
+                    phone: "(061) 3317-9774",
+                    avatar: "FD",
+                    color: "emerald",
+                    temas: ["Meu SENAI", "Autenticação de Usuários", "Integração de SGE e AVA", "Experiência de Usuários"]
+                },
+                {
+                    name: "Roziney Alencar Melo Weber",
+                    role: "Analista de Inovação Pedagógica",
+                    gerencia: "Soluções Educacionais",
+                    subSec: "Coord. Tecnologias Educacionais",
+                    email: "roziney.weber@senaicni.com.br",
+                    phone: "(061) 3317-8852",
+                    avatar: "RW",
+                    color: "emerald",
+                    temas: ["PRAIA", "Parcerias de Tecnologia de Base Nacional", "Inteligência Artificial na Educação"]
+                },
+                {
+                    name: "Germana Arcoverde Bezerra Zapata",
+                    role: "Analista do Instituto de Tecnologias Educacionais",
+                    gerencia: "Soluções Educacionais",
+                    subSec: "Coord. Tecnologias Educacionais",
+                    email: "gzapata@senaicni.com.br",
+                    phone: "(061) 3317-9530",
+                    avatar: "GZ",
+                    color: "emerald",
+                    temas: ["Instituto SESI SENAI de Tecnologias Educacionais", "Comunidades de Prática", "Pesquisas de Inovação"]
+                },
+                {
+                    name: "Frankwaine Pereira de Melo",
+                    role: "Analista de Parcerias do SITEC",
+                    gerencia: "Soluções Educacionais",
+                    subSec: "Coord. Tecnologias Educacionais",
+                    email: "frankwaine.melo@senaicni.com.br",
+                    phone: "(061) 3317-9395",
+                    avatar: "FM",
+                    color: "emerald",
+                    temas: ["SITEC", "Comunidades de Aprendizagem", "Conexão com Indústrias", "Projetos Tecnológicos"]
+                },
+                {
+                    name: "Edilson de Oliveira Caldas",
+                    role: "Analista de Convênios de Inovação",
+                    gerencia: "Soluções Educacionais",
+                    subSec: "Coord. Tecnologias Educacionais",
+                    email: "edilson.caldas@senaicni.com.br",
+                    phone: "(061) 3317-8975",
+                    avatar: "EC",
+                    color: "emerald",
+                    temas: ["Parcerias Educacionais e Tecnológicas", "Convênio Google", "Oficinas Google For Education"]
+                },
+                {
+                    name: "Bruno Silveira Duarte",
+                    role: "Analista de Infraestruturas de Apoio",
+                    gerencia: "Soluções Educacionais",
+                    subSec: "Coord. Tecnologias Educacionais",
+                    email: "bduarte@senaicni.com.br",
+                    phone: "(061) 3317-8338",
+                    avatar: "BD",
+                    color: "emerald",
+                    temas: ["Labs Virtuais de Apoio", "Hardware VR", "Kits Tecnológicos", "Suporte a Ambientes Virtuais"]
+                },
+                {
+                    name: "Giseli Almeida de Araujo",
+                    role: "Analista de Itinerários e Padrões de Cursos",
+                    gerencia: "Soluções Educacionais",
+                    subSec: "Coord. Qualidade Educacional",
+                    email: "giseli.araujo@senaicni.com.br",
+                    phone: "(061) 3317-9091",
+                    avatar: "GA",
+                    color: "indigo",
+                    temas: ["Itinerários Nacionais", "Perfis Profissionais de Cursos", "Desenho Curricular", "Padronização Pedagógica"]
+                },
+                {
+                    name: "Viviane Martins Macedo Grande Pousa",
+                    role: "Analista de Sistemas de Aprendizagem Virtual",
+                    gerencia: "Soluções Educacionais",
+                    subSec: "Coord. Qualidade Educacional",
+                    email: "viviane.pousa@senaicni.com.br",
+                    phone: "(061) 3317-8910",
+                    avatar: "VP",
+                    color: "indigo",
+                    temas: ["AVA SENAI - SGE", "Moodle", "Ambiente Virtual de Aprendizagem", "Parametrização Escolar"]
+                },
+                {
+                    name: "Laise Caldeira Pedroso",
+                    role: "Analista de Recursos Didáticos e Livros",
+                    gerencia: "Soluções Educacionais",
+                    subSec: "Coord. Qualidade Educacional",
+                    email: "laise.pedroso@senaicni.com.br",
+                    phone: "(061) 3317-9288",
+                    avatar: "LP",
+                    color: "indigo",
+                    temas: ["Livros Didáticos do SENAI", "Livros Técnicos", "Guia do Aluno", "Recursos Instrucionais"]
+                },
+                {
+                    name: "Tricia Miranda Araujo",
+                    role: "Analista de Competições Profissionais",
+                    gerencia: "Soluções Educacionais",
+                    subSec: "Coord. Qualidade Educacional",
+                    email: "tricia@senaicni.com.br",
+                    phone: "(061) 3317-8937",
+                    avatar: "TA",
+                    color: "indigo",
+                    temas: ["WorldSkills Brasil", "Olimpíada do Conhecimento", "Treinamento de Competidores de Elite"]
+                },
+                {
+                    name: "Daniel Brito do Nascimento",
+                    role: "Analista de Programas de Empreendedorismo",
+                    gerencia: "Soluções Educacionais",
+                    subSec: "Coord. Qualidade Educacional",
+                    email: "daniel.nascimento@senaicni.com.br",
+                    phone: "(061) 3317-9693",
+                    avatar: "DN",
+                    color: "indigo",
+                    temas: ["Saga SENAI de Inovação", "Projetos de Alunos (Inova)", "Empreendedorismo Estudantil"]
+                },
+                {
+                    name: "Anna Christina Theodora Aun de Azevedo Nascimento",
+                    role: "Analista de Padrões Físicos de Aprendizagem",
+                    gerencia: "Soluções Educacionais",
+                    subSec: "Coord. Qualidade Educacional",
+                    email: "anna.nascimento@senaicni.com.br",
+                    phone: "(061) 3317-8939",
+                    avatar: "AN",
+                    color: "indigo",
+                    temas: ["Padrão Arquitetônico de Escolas", "Layouts de Laboratório", "Rede SENAI Lab", "Infraestrutura Física Educacional"]
+                },
+                {
+                    name: "Decio Campos da Silva",
+                    role: "Analista de Competições FRC",
+                    gerencia: "Soluções Educacionais",
+                    subSec: "Coord. Qualidade Educacional",
+                    email: "decio.silva@senaicni.com.br",
+                    phone: "(061) 3317-9726",
+                    avatar: "DS",
+                    color: "indigo",
+                    temas: ["FRC (SESI/SENAI Robotics)", "Robótica Estudantil", "Competições de Robótica", "Parcerias de Competição"]
+                },
+                {
+                    name: "Bibiana Karla Azevedo Lima",
+                    role: "Analista de Produto - Plataformas B2C",
+                    gerencia: "Negócios Educacionais",
+                    subSec: "",
+                    email: "bibiana.lima@senaicni.com.br",
+                    phone: "(061) 3317-8928",
+                    avatar: "BL",
+                    color: "blue",
+                    temas: ["Futuro.digital", "E-commerce de Cursos", "Captação de Alunos Pessoa Física", "Geração de Vendas B2C"]
+                },
+                {
+                    name: "Aroldo Cardozo de Alvarenga Paulino",
+                    role: "Analista de Canais de Negócios Digitais",
+                    gerencia: "Negócios Educacionais",
+                    subSec: "",
+                    email: "aroldo.paulino@senaicni.com.br",
+                    phone: "(061) 3317-9381",
+                    avatar: "AP",
+                    color: "blue",
+                    temas: ["Mundo SENAI", "Plataformas Digitais de Vendas", "Integração Comercial", "Sinalização de Leads"]
+                },
+                {
+                    name: "Claudia Maria Mendes de Araujo",
+                    role: "Analista Comercial de Contas Corporativas",
+                    gerencia: "Negócios Educacionais",
+                    subSec: "",
+                    email: "cmmaraujo@senaicni.com.br",
+                    phone: "(061) 3317-8851",
+                    avatar: "CA",
+                    color: "blue",
+                    temas: ["Contas Nacionais", "Ações PJ de Base Nacional", "Vendas Corporativas B2B"]
+                },
+                {
+                    name: "Gislaine Luciana Martins Bruzzi",
+                    role: "Analista de Relacionamento e Parcerias",
+                    gerencia: "Negócios Educacionais",
+                    subSec: "",
+                    email: "gbruzzi@senaicni.com.br",
+                    phone: "(061) 3317-9172",
+                    avatar: "GB",
+                    color: "blue",
+                    temas: ["PROPAG", "Certificações de Parceiros", "SESI Integração Nacional", "Geração de Leads Corporativos"]
+                },
+                {
+                    name: "Jefferson Camargo Froes",
+                    role: "Analista Executivo de Projetos Setoriais",
+                    gerencia: "Negócios Educacionais",
+                    subSec: "",
+                    email: "jefferson.froes@senaicni.com.br",
+                    phone: "(061) 3317-8816",
+                    avatar: "JF",
+                    color: "blue",
+                    temas: ["Brasil Mais Produtivo", "Melhoria da Produtividade de Pequenas Empresas", "Venda de Soluções de Capacitação"]
+                },
+                {
+                    name: "Katiusce Elixece da Rosa Arruda",
+                    role: "Analista de Expansão de Ensino Médio",
+                    gerencia: "Negócios Educacionais",
+                    subSec: "",
+                    email: "katiusce.arruda@senaicni.com.br",
+                    phone: "(061) 3317-9859",
+                    avatar: "KA",
+                    color: "blue",
+                    temas: ["Ensino Médio Técnico Integrado", "Projetos de Larga Escala de Ensino Médio", "Expansão de Matrículas"]
+                },
+                {
+                    name: "Marcelo Miguel Steffen",
+                    role: "Consultor de Inteligência e Modelagem Educacional",
+                    gerencia: "Negócios Educacionais",
+                    subSec: "",
+                    email: "marcelo.steffen@senaicni.com.br",
+                    phone: "(061) 3317-9838",
+                    avatar: "MS",
+                    color: "blue",
+                    temas: ["UniSENAI", "Modelagem de Aprendizagem Industrial", "Programas Setoriais de Capacitação", "Parcerias de Mercado"]
+                },
+                {
+                    name: "Monique Oliveira Ferreira",
+                    role: "Analista de Inteligência de Mercado",
+                    gerencia: "Negócios Educacionais",
+                    subSec: "",
+                    email: "monique.ferreira@senaicni.com.br",
+                    phone: "(011) 3040-4668",
+                    avatar: "MO",
+                    color: "blue",
+                    temas: ["Inteligência de Mercado", "Pesquisa de Demanda Industrial", "Análise de Concorrência", "Precificação de Cursos"]
+                },
+                {
+                    name: "Vanessa Venancio Pappetti Canhete",
+                    role: "Analista de Contratos e Convênios de Base Nacional",
+                    gerencia: "Negócios Educacionais",
+                    subSec: "",
+                    email: "vcanhete@senaicni.com.br",
+                    phone: "(061) 3317-9679",
+                    avatar: "VC",
+                    color: "blue",
+                    temas: ["Contratos de Convênio de Base Nacional", "Contratos Globais PJ", "Faturamento Corporativo", "Relações com Grandes Grupos Econômicos"]
+                },
+                {
+                    name: "Walberth Rogerio de Souza Oliveira",
+                    role: "Consultor Técnico de Processos Educacionais Nacionais",
+                    gerencia: "Negócios Educacionais",
+                    subSec: "",
+                    email: "woliveira@senaicni.com.br",
+                    phone: "(061) 3317-9763",
+                    avatar: "WO",
+                    color: "blue",
+                    temas: ["Certificação Profissional e de Pessoas", "Aprendizagem Industrial", "Sistema de Avaliação da Educação Profissional", "Itinerários Nacionais", "Metodologia SENAI de Educação Profissional", "Apoios Financeiros OSC nº 03/2016", "RCA 2024"]
+                },
+                {
+                    name: "Rosamaria Capo Sobral",
+                    role: "Especialista em Diretrizes Metodológicas Integradas",
+                    gerencia: "Operações Educacionais",
+                    subSec: "",
+                    email: "rsobral@senaicni.com.br",
+                    phone: "(061) 3317-9302",
+                    avatar: "RS",
+                    color: "amber",
+                    temas: ["Metodologia SENAI de Educação Profissional (MSEP)", "Processo e Metodologia Integrados", "Padronização Metodológica"]
+                },
+                {
+                    name: "Hugo Nakatani",
+                    role: "Analista de Processos e Gestão de Indicadores",
+                    gerencia: "Operações Educacionais",
+                    subSec: "",
+                    email: "hnakatani@senaicni.com.br",
+                    phone: "(061) 3317-8856",
+                    avatar: "HN",
+                    color: "amber",
+                    temas: ["SAGE", "SGE", "SGD de Processos", "Sistemas Acadêmicos Integrados"]
+                },
+                {
+                    name: "Elianice Silva Castro",
+                    role: "Analista de Otimização Operacional",
+                    gerencia: "Operações Educacionais",
+                    subSec: "",
+                    email: "elianice.castro@senaicni.com.br",
+                    phone: "(061) 3317-9703",
+                    avatar: "EC",
+                    color: "amber",
+                    temas: ["Lean Office", "Cultura de Melhoria Contínua", "Eliminação de Desperdícios Organizacionais"]
+                },
+                {
+                    name: "Sandro Portela Ormond",
+                    role: "Analista de Diretrizes Educacionais",
+                    gerencia: "Operações Educacionais",
+                    subSec: "",
+                    email: "sormond@senaicni.com.br",
+                    phone: "(061) 3317-8945",
+                    avatar: "SO",
+                    color: "amber",
+                    temas: ["Ensino Superior", "Ensino Médio", "Diretrizes Acadêmicas", "Regulamentos do Ensino"]
+                },
+                {
+                    name: "Cristiano Vieira de Pinho",
+                    role: "Consultor de Processos Lean",
+                    gerencia: "Operações Educacionais",
+                    subSec: "",
+                    email: "cristiano.pinho@senaicni.com.br",
+                    phone: "(061) 3317-8915",
+                    avatar: "CP",
+                    color: "amber",
+                    temas: ["Lean Educacional", "Otimização de rotinas acadêmicas", "Metodologias Lean aplicadas a Escolas"]
+                },
+                {
+                    name: "Carla Abigail Araujo",
+                    role: "Analista de Sistemas e Suporte",
+                    gerencia: "Operações Educacionais",
+                    subSec: "",
+                    email: "carla.araujo@senaicni.com.br",
+                    phone: "(061) 3317-9742",
+                    avatar: "CA",
+                    color: "amber",
+                    temas: ["AVA", "Rubeus CRM Educacional", "SGD de Processos", "Sistemas de Suporte Acadêmico"]
+                },
+                {
+                    name: "Ana Maria Sousa da Silva",
+                    role: "Analista de Indicadores Escolares",
+                    gerencia: "Operações Educacionais",
+                    subSec: "",
+                    email: "ana.sousa@senaicni.com.br",
+                    phone: "Sem Telefone",
+                    avatar: "AM",
+                    color: "amber",
+                    temas: ["Gestão de indicadores pedagógicos", "SAGE", "SGE", "Decisões baseadas em dados educacionais"]
+                },
+                {
+                    name: "Fernanda Marques de Oliveira",
+                    role: "Analista de Auditorias de Aprendizagem Industrial",
+                    gerencia: "Operações Educacionais",
+                    subSec: "",
+                    email: "fernanda.oliveira@senaicni.com.br",
+                    phone: "(061) 3317-8983",
+                    avatar: "FO",
+                    color: "amber",
+                    temas: ["PSAI (Processo de Supervisão de Aprendizagem Industrial)", "Auditorias Regionais de Qualidade", "Acompanhamento de Docência"]
+                },
+                {
+                    name: "Sinara Sant Anna Celistre",
+                    role: "Coordenadora de Capacitações Docentes",
+                    gerencia: "Operações Educacionais",
+                    subSec: "",
+                    email: "sinara.celistre@senaicni.com.br",
+                    phone: "(061) 3317-9706",
+                    avatar: "SC",
+                    color: "amber",
+                    temas: ["Capacitação docente", "Itinerário de capacitação e jornada pedagógica", "Universidade Corporativa", "Formação de Professores"]
+                },
+                {
+                    name: "Antonio Braz Lopes Filho",
+                    role: "Analista de Projetos de Inovação Prática",
+                    gerencia: "Operações Educacionais",
+                    subSec: "",
+                    email: "antonio.lopes@senaicni.com.br",
+                    phone: "(061) 3317-9699",
+                    avatar: "AL",
+                    color: "amber",
+                    temas: ["Grand Prix e Integra", "Saga SENAI de Inovação", "Projetos Práticos de Alunos"]
+                }
+            ];
+        }
+
+        // ============================================
+        // 4. ABRIR PLANILHA PARA EDIÇÃO
+        // ============================================
+        function openEditSheet() {
+            const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/edit`;
+            window.open(url, '_blank');
+        }
+
+        // ============================================
+        // 5. RENDERIZAR ORGANOGRAMA
+        // ============================================
+        function renderHierarchy() {
+            const container = document.getElementById('view-hierarchy');
+            
+            const gerentes = {
+                'Soluções Educacionais': {
+                    nome: 'Luiz Eduardo Leão',
+                    email: 'lleao@edu.senai.br',
+                    phone: '(061) 3317-9159',
+                    cor: 'emerald',
+                    icone: 'book-open',
+                    proposta: '"Impulsionar o futuro do aprendizado por meio de soluções educacionais disruptivas e infraestrutura física e digital de ponta."',
+                    coords: [
+                        { nome: 'Anderson Scarlassara', cargo: 'Coord. Tecnologias', phone: '(061) 3317-8314', cor: 'emerald' },
+                        { nome: 'Natalia Schultz', cargo: 'Coord. Qualidade', phone: '(061) 3317-8811', cor: 'indigo' }
+                    ]
+                },
+                'Negócios Educacionais': {
+                    nome: 'Mateus Simoes de Freitas',
+                    email: 'msfreitas@senaicni.com.br',
+                    phone: '(061) 3317-9852',
+                    cor: 'blue',
+                    icone: 'briefcase',
+                    proposta: '"Transformar a área educacional do SENAI em um vetor estratégico de sustentabilidade financeira, gerando negócios e soluções em larga escala."',
+                    coords: []
+                },
+                'Operações Educacionais': {
+                    nome: 'Vanessa Sorda Frason',
+                    email: 'vanessa.frason@senaicni.com.br',
+                    phone: '(061) 3317-9015',
+                    cor: 'amber',
+                    icone: 'cpu',
+                    proposta: '"Assegurar a excelência acadêmica e a eficiência operacional por meio da padronização estratégica dos processos educacionais."',
+                    coords: []
+                }
+            };
+
+            const contagem = {};
+            professionals.forEach(p => {
+                const gerencia = p.gerencia || 'Outros';
+                contagem[gerencia] = (contagem[gerencia] || 0) + 1;
+            });
+
+            let html = `
+                <div class="flex flex-col items-center">
+                    <div class="w-full max-w-md bg-gradient-to-br from-indigo-900 to-indigo-950 text-white rounded-2xl shadow-xl border-4 border-indigo-400 p-6 text-center relative z-10">
+                        <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-400 text-indigo-950 text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wider shadow">
+                            Superintendente
+                        </div>
+                        <div class="w-16 h-16 bg-white/20 border-2 border-white rounded-full mx-auto flex items-center justify-center font-bold text-2xl text-white mb-3">CB</div>
+                        <h3 class="text-lg font-bold">Carlos Eduardo de Medeiros Braguini</h3>
+                        <p class="text-indigo-200 text-xs mt-1">Superintendência de Educação Profissional e Superior</p>
+                        <div class="mt-3 pt-3 border-t border-indigo-800/80 flex flex-col sm:flex-row justify-center gap-4 text-xs text-indigo-300">
+                            <span><i data-lucide="mail" class="w-3.5 h-3.5 inline mr-1"></i> carlos.braguini@senaicni.com.br</span>
+                            <span><i data-lucide="phone" class="w-3.5 h-3.5 inline mr-1"></i> (061) 3317-9797</span>
+                        </div>
+                    </div>
+
+                    <div class="h-10 w-1 bg-indigo-200"></div>
+                    <div class="w-full max-w-5xl h-1 border-t-2 border-dashed border-indigo-200"></div>
+                    <div class="flex justify-between w-full max-w-5xl h-6">
+                        <div class="w-1 bg-indigo-200 h-full"></div>
+                        <div class="w-1 bg-indigo-200 h-full"></div>
+                        <div class="w-1 bg-indigo-200 h-full"></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-7xl">
+            `;
+
+            for (const [gerencia, info] of Object.entries(gerentes)) {
+                const total = contagem[gerencia] || 0;
+                const coordsHtml = info.coords.length > 0 ? `
+                    <div class="w-full grid grid-cols-2 gap-2 mt-1">
+                        ${info.coords.map(c => `
+                            <div class="bg-${c.cor}-50/50 p-2 rounded-lg border border-${c.cor}-100/50 text-center">
+                                <span class="text-[8px] font-bold text-${c.cor}-700 uppercase tracking-wider block">${c.cargo}</span>
+                                <div class="text-[10px] font-semibold text-slate-800">${c.nome}</div>
+                                <div class="text-[8px] text-slate-400">${c.phone}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : `
+                    <div class="w-full bg-slate-50/70 p-2 rounded-lg border border-slate-200/50 text-center">
+                        <span class="text-[8px] font-bold text-slate-500 uppercase tracking-wider block">Equipe</span>
+                        <div class="text-[9px] text-slate-600">${total} especialistas</div>
+                    </div>
+                `;
+
+                html += `
+                    <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 flex flex-col relative hover:shadow-xl transition-all fade-in">
+                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-${info.cor}-500 text-white text-[10px] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap">
+                            Gerência de ${gerencia}
+                        </div>
+                        
+                        <div class="flex flex-col items-center mt-3">
+                            <div class="w-14 h-14 bg-${info.cor}-50 text-${info.cor}-600 rounded-full flex items-center justify-center mb-2 border-2 border-${info.cor}-200">
+                                <i data-lucide="${info.icone}" class="w-7 h-7"></i>
+                            </div>
+                            
+                            <div class="w-full bg-${info.cor}-50/70 rounded-xl p-3 text-center border border-${info.cor}-200/50 mb-2">
+                                <span class="text-[9px] font-bold text-${info.cor}-600 uppercase tracking-wider">Gerente</span>
+                                <div class="font-bold text-slate-900 text-sm">${info.nome}</div>
+                                <div class="text-[10px] text-slate-500">${info.email} | ${info.phone}</div>
+                            </div>
+
+                            ${coordsHtml}
+
+                            <div class="mt-3 w-full bg-gradient-to-r from-${info.cor}-50 to-${info.cor}-100/30 p-3 rounded-xl border border-${info.cor}-200/40">
+                                <span class="text-[8px] font-bold text-${info.cor}-700 uppercase tracking-wider block text-center">🎯 Proposta de Valor</span>
+                                <p class="text-[10px] text-slate-700 leading-relaxed text-center italic mt-0.5">${info.proposta}</p>
+                            </div>
+                        </div>
+                        
+                        <button onclick="filterByGerencia('${gerencia}')" class="mt-3 text-xs font-semibold text-${info.cor}-600 hover:text-${info.cor}-700 flex items-center justify-center gap-1">
+                            Ver Equipe Completa (${total} pessoas) <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                `;
+            }
+
+            html += `
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-100/70 rounded-2xl p-6 border border-slate-200">
+                    <div>
+                        <h5 class="font-bold text-slate-800 text-sm mb-1 flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Soluções: Impulsionamento
+                        </h5>
+                        <p class="text-xs text-slate-600 leading-relaxed">Foco no desenvolvimento de soluções instrucionais disruptivas de alta escala, competições mundiais, padrão arquitetônico e tecnologias de ponta.</p>
+                    </div>
+                    <div>
+                        <h5 class="font-bold text-slate-800 text-sm mb-1 flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Negócios: Vetor Financeiro
+                        </h5>
+                        <p class="text-xs text-slate-600 leading-relaxed">Foco de posicionamento comercial de grande escala, atuando em e-commerce B2C e contas nacionais corporativas estratégicas.</p>
+                    </div>
+                    <div>
+                        <h5 class="font-bold text-slate-800 text-sm mb-1 flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Operações: Padronização
+                        </h5>
+                        <p class="text-xs text-slate-600 leading-relaxed">Controle metodológico integrado, auditorias de aprendizagem sistêmicas e fomento à cultura Lean educacional e capacitação docente.</p>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // ============================================
+        // 6. RENDERIZAR DIRETÓRIO
+        // ============================================
+        function renderDirectory() {
+            const container = document.getElementById('view-directory');
+            
+            if (!professionals || professionals.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="text-6xl mb-4">📋</div>
+                        <h3 class="text-lg font-semibold text-slate-700">Nenhum profissional encontrado</h3>
+                        <p class="text-sm text-slate-500 mt-2">Verifique se a planilha está publicada e com dados.</p>
+                        <button onclick="openEditSheet()" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                            Abrir Planilha
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            const grupos = {};
+            professionals.forEach(p => {
+                const gerencia = p.gerencia || 'Outros';
+                if (!grupos[gerencia]) grupos[gerencia] = {};
+                const subKey = p.subSec || 'Sem Coordenação';
+                if (!grupos[gerencia][subKey]) grupos[gerencia][subKey] = [];
+                grupos[gerencia][subKey].push(p);
+            });
+
+            const cores = {
+                'Soluções Educacionais': 'emerald',
+                'Negócios Educacionais': 'blue',
+                'Operações Educacionais': 'amber'
+            };
+
+            const icones = {
+                'Soluções Educacionais': 'book-open',
+                'Negócios Educacionais': 'briefcase',
+                'Operações Educacionais': 'cpu'
+            };
+
+            const gerentes = {
+                'Soluções Educacionais': 'Luiz Eduardo Leão',
+                'Negócios Educacionais': 'Mateus Simoes de Freitas',
+                'Operações Educacionais': 'Vanessa Sorda Frason'
+            };
+
+            let html = '';
+
+            for (const [gerencia, subGroups] of Object.entries(grupos)) {
+                const cor = cores[gerencia] || 'slate';
+                const icone = icones[gerencia] || 'users';
+                const gerente = gerentes[gerencia] || '';
+
+                html += `
+                    <div class="space-y-6" id="sec-${gerencia.replace(/\s/g, '-')}">
+                        <div class="flex items-center gap-3 border-b-2 border-${cor}-500 pb-3">
+                            <div class="bg-${cor}-500 text-white p-2 rounded-xl">
+                                <i data-lucide="${icone}" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Gerência de ${gerencia}</h2>
+                                <p class="text-xs sm:text-sm text-slate-500">${gerente} - Gerente</p>
+                            </div>
+                        </div>
+                `;
+
+                for (const [subSec, pessoas] of Object.entries(subGroups)) {
+                    if (subSec !== 'Sem Coordenação') {
+                        html += `
+                            <div class="bg-${cor}-50/50 p-3 rounded-xl border border-${cor}-100">
+                                <div class="flex justify-between items-center flex-wrap gap-2">
+                                    <div>
+                                        <h3 class="font-bold text-${cor}-950 flex items-center gap-2 text-sm sm:text-base">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-${cor}-500"></span>
+                                            ${subSec}
+                                        </h3>
+                                    </div>
+                                    <div class="text-right text-xs">
+                                        <span class="font-bold text-${cor}-900">${pessoas.length} profissionais</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    html += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="container-${gerencia.replace(/\s/g, '')}-${subSec.replace(/\s/g, '')}">`;
+                    
+                    pessoas.forEach(prof => {
+                        html += createProfessionalCard(prof);
+                    });
+                    
+                    html += `</div>`;
+                }
+
+                html += `</div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // ============================================
+        // 7. CRIAR CARD DE PROFISSIONAL
+        // ============================================
+        function createProfessionalCard(prof) {
+            const avatarBg = {
+                'Soluções Educacionais': 'bg-emerald-100 text-emerald-800',
+                'Negócios Educacionais': 'bg-blue-100 text-blue-800',
+                'Operações Educacionais': 'bg-amber-100 text-amber-800'
+            }[prof.gerencia] || 'bg-slate-100 text-slate-700';
+
+            const cor = {
+                'Soluções Educacionais': 'emerald',
+                'Negócios Educacionais': 'blue',
+                'Operações Educacionais': 'amber'
+            }[prof.gerencia] || 'slate';
+
+            const temasBadges = (prof.temas && prof.temas.length > 0) ? 
+                prof.temas.map(tema => 
+                    `<span class="tema-badge inline-block bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-2.5 py-1 rounded-lg mr-1.5 mb-1.5 transition-colors cursor-pointer" onclick="setSearch('${tema.replace(/'/g, "\\'")}')">${tema}</span>`
+                ).join('') : 
+                '<span class="text-xs text-slate-400">Nenhuma entrega cadastrada</span>';
+
+            return `
+                <div class="professional-card bg-white rounded-2xl shadow-md border border-slate-200 p-5 hover:shadow-xl transition-all duration-300 flex flex-col justify-between" 
+                     data-name="${(prof.name || '').toLowerCase()}" 
+                     data-role="${(prof.role || '').toLowerCase()}" 
+                     data-gerencia="${(prof.gerencia || '').toLowerCase()}" 
+                     data-temas="${(prof.temas || []).join(' | ').toLowerCase()}">
+                    <div>
+                        <div class="flex items-start gap-3 mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 ${avatarBg} rounded-xl flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+                                    ${prof.avatar || 'XX'}
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-900 text-base leading-snug">${prof.name || 'Nome não informado'}</h4>
+                                    <p class="text-xs text-slate-500 font-medium">${prof.role || 'Cargo não informado'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <span class="bg-${cor}-50 text-${cor}-700 text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">${prof.gerencia || 'Outros'}</span>
+                            ${prof.subSec ? `<span class="bg-slate-100 text-slate-600 text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ml-1">${prof.subSec}</span>` : ''}
+                        </div>
+
+                        <div class="border-t border-b border-slate-100 py-3 my-3 text-xs text-slate-600 space-y-1.5">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="mail" class="w-4 h-4 text-slate-400"></i>
+                                <a href="mailto:${prof.email || '#'}" class="hover:text-indigo-600 transition-colors">${prof.email || 'Email não informado'}</a>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="phone" class="w-4 h-4 text-slate-400"></i>
+                                <span>${prof.phone || 'Telefone não informado'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Entregas de Responsabilidade:</span>
+                        <div class="flex flex-wrap max-h-32 overflow-y-auto pr-1">
+                            ${temasBadges}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ============================================
+        // 8. FUNÇÕES DE BUSCA E FILTRO
+        // ============================================
+        function filterProfessionals() {
+            const input = document.getElementById('search-input');
+            const filter = input.value.toLowerCase().trim();
+            const cards = document.getElementsByClassName('professional-card');
+            const clearBtn = document.getElementById('clear-search');
+            const resultsMsg = document.getElementById('results-message');
+            const resultsCount = document.getElementById('results-count');
+
+            if (filter.length > 0) {
+                clearBtn.classList.remove('hidden');
+                resultsMsg.classList.remove('hidden');
+                switchView('directory');
+            } else {
+                clearBtn.classList.add('hidden');
+                resultsMsg.classList.add('hidden');
+                showAllSections();
+                for (let i = 0; i < cards.length; i++) {
+                    cards[i].classList.remove('hidden');
+                }
+                return;
+            }
+
+            let foundCount = 0;
+
+            for (let i = 0; i < cards.length; i++) {
+                const name = cards[i].getAttribute('data-name') || '';
+                const role = cards[i].getAttribute('data-role') || '';
+                const gerencia = cards[i].getAttribute('data-gerencia') || '';
+                const temas = cards[i].getAttribute('data-temas') || '';
+
+                if (name.includes(filter) || role.includes(filter) || gerencia.includes(filter) || temas.includes(filter)) {
+                    cards[i].classList.remove('hidden');
+                    foundCount++;
+                } else {
+                    cards[i].classList.add('hidden');
+                }
+            }
+
+            resultsCount.textContent = `Encontramos ${foundCount} profissional(is) associados ao termo de entrega "${input.value}".`;
+            adjustSectionsVisibility();
+        }
+
+        function setSearch(term) {
+            document.getElementById('search-input').value = term;
+            filterProfessionals();
+            document.getElementById('view-tabs').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            filterProfessionals();
+        }
+
+        function filterByGerencia(gerenciaNome) {
+            switchView('directory');
+            setSearch(gerenciaNome);
+        }
+
+        function switchView(view) {
+            const tabHierarchy = document.getElementById('tab-hierarchy');
+            const tabDirectory = document.getElementById('tab-directory');
+            const viewHierarchy = document.getElementById('view-hierarchy');
+            const viewDirectory = document.getElementById('view-directory');
+
+            if (view === 'hierarchy') {
+                tabHierarchy.className = 'border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base flex items-center gap-2';
+                tabDirectory.className = 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base flex items-center gap-2';
+                viewHierarchy.classList.remove('hidden');
+                viewDirectory.classList.add('hidden');
+            } else {
+                tabHierarchy.className = 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base flex items-center gap-2';
+                tabDirectory.className = 'border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base flex items-center gap-2';
+                viewHierarchy.classList.add('hidden');
+                viewDirectory.classList.remove('hidden');
+            }
+        }
+
+        function adjustSectionsVisibility() {
+            const sections = document.querySelectorAll('[id^="sec-"]');
+            sections.forEach(section => {
+                const cards = section.querySelectorAll('.professional-card:not(.hidden)');
+                if (cards.length === 0) {
+                    section.classList.add('hidden');
+                } else {
+                    section.classList.remove('hidden');
+                }
+            });
+        }
+
+        function showAllSections() {
+            const sections = document.querySelectorAll('[id^="sec-"]');
+            sections.forEach(section => section.classList.remove('hidden'));
+        }
+
+        // ============================================
+        // 9. INICIALIZAÇÃO
+        // ============================================
+        async function init() {
+            try {
+                const data = await loadFromGoogleSheets();
+                professionals = data;
+                allProfessionals = data;
+                
+                document.getElementById('total-professionals').textContent = professionals.length;
+                document.getElementById('last-update').textContent = new Date().toLocaleString('pt-BR');
+                
+                renderHierarchy();
+                renderDirectory();
+                
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('search-section').classList.remove('hidden');
+                
+                setTimeout(() => {
+                    lucide.createIcons();
+                }, 100);
+                
+                console.log('✅ Aplicação inicializada com sucesso!');
+                console.log(`📊 Total de profissionais: ${professionals.length}`);
+            } catch (error) {
+                console.error('❌ Erro na inicialização:', error);
+                document.getElementById('loading-state').innerHTML = `
+                    <div class="text-center">
+                        <div class="text-red-500 text-6xl mb-4">⚠️</div>
+                        <p class="text-slate-700 font-medium">Erro ao carregar os dados</p>
+                        <p class="text-slate-500 text-sm mt-2">${error.message || 'Erro desconhecido'}</p>
+                        <button onclick="location.reload()" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                            Tentar novamente
+                        </button>
+                        <button onclick="openEditSheet()" class="mt-4 ml-2 bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition-colors">
+                            Abrir Planilha
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Iniciar
+        init();
+    </script>
+</body>
+</html>
