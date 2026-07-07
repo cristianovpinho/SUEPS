@@ -36,7 +36,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Badge de coordenador - versão única */
         .coordinator-badge {
             font-size: 8px;
             font-weight: 700;
@@ -81,7 +80,6 @@
             white-space: nowrap;
         }
 
-        /* Estrutura dos cards */
         .professional-card {
             transition: all 0.3s ease;
             border-width: 2px;
@@ -142,7 +140,6 @@
             border-left-width: 6px !important;
         }
 
-        /* Destaque para cards de gerentes - versão unificada */
         .gerente-card {
             border: 3px solid #fbbf24 !important;
             box-shadow: 0 8px 25px rgba(251, 191, 36, 0.25) !important;
@@ -164,7 +161,6 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        /* Proposta de valor abaixo dos cards */
         .proposta-valor {
             border-top: 2px solid #e2e8f0;
             padding-top: 12px;
@@ -180,7 +176,6 @@
             font-style: normal;
         }
 
-        /* Esconder contadores de pessoas */
         .contador-pessoas {
             display: none !important;
         }
@@ -188,7 +183,6 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <!-- Header -->
     <header class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 text-white shadow-xl">
         <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
@@ -216,14 +210,12 @@
         </div>
     </header>
 
-    <!-- Loading State -->
     <div id="loading-state" class="flex flex-col items-center justify-center py-20">
         <div class="loading-spinner"></div>
         <p class="text-slate-500 mt-4 text-sm">Carregando dados dos colaboradores...</p>
         <p class="text-slate-400 text-xs mt-2">Conectando ao Google Sheets</p>
     </div>
 
-    <!-- Barra de Busca -->
     <section id="search-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 w-full z-10 hidden">
         <div class="bg-white rounded-2xl shadow-xl border border-slate-100 p-6">
             <div class="relative">
@@ -269,7 +261,6 @@
         </div>
     </section>
 
-    <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
         
         <div id="results-message" class="hidden mb-6 bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex items-center justify-between">
@@ -285,7 +276,6 @@
             <button onclick="clearSearch()" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold underline">Ver Todos</button>
         </div>
 
-        <!-- Abas de Navegação -->
         <div class="border-b border-slate-200 mb-8" id="view-tabs">
             <nav class="flex space-x-8" aria-label="Tabs">
                 <button onclick="switchView('hierarchy')" id="tab-hierarchy" class="border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm sm:text-base flex items-center gap-2">
@@ -297,15 +287,11 @@
             </nav>
         </div>
 
-        <!-- VIEW 1: ORGANOGRAMA DE GESTÃO -->
         <div id="view-hierarchy" class="space-y-12"></div>
-
-        <!-- VIEW 2: PESSOAS, PROCESSOS E PROJETOS -->
         <div id="view-directory" class="hidden space-y-12"></div>
 
     </main>
 
-    <!-- Rodapé -->
     <footer class="bg-slate-950 text-slate-400 py-8 border-t border-slate-800 mt-auto">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:flex sm:justify-between sm:items-center">
             <p class="text-sm">
@@ -320,9 +306,6 @@
     </footer>
 
     <script>
-        // ============================================
-        // CONFIGURAÇÃO
-        // ============================================
         const CONFIG = {
             SHEET_ID: '1Vwp4olbNoo4cLfeI92OP3Qr20thXiRBQ2iJSGLfcS0g',
             SHEET_NAME: 'Dados',
@@ -332,9 +315,6 @@
 
         let professionals = [];
 
-        // ============================================
-        // 🎨 CORES AJUSTADAS PELO USUÁRIO
-        // ============================================
         const PALETA_CORES = {
             'Soluções Educacionais': {
                 background: '#F3FCF7',
@@ -386,7 +366,6 @@
             }
         };
 
-        // Cores padrão (fallback)
         const CORES_PADRAO = {
             background: '#f8fafc',
             border: '#94a3b8',
@@ -404,18 +383,12 @@
             coordinatorBadgeText: '#ffffff'
         };
 
-        // ============================================
-        // PROPOSTAS DE VALOR
-        // ============================================
         const PROPOSTAS_VALOR = {
             'Soluções Educacionais': '"Impulsionar o futuro do aprendizado por meio de soluções educacionais disruptivas e infraestrutura física e digital de ponta, unindo tecnologias e metodologias emergentes para potencializar o conhecimento, e expandir o desenvolvimento de competências de forma personalizada, em escala nacional."',
             'Negócios Educacionais': '"Transformar a área educacional do SENAI em um vetor estratégico de sustentabilidade financeira. Com postura consultiva e orientada a resultados, a gerência gera negócios, leads e soluções em larga escala para empresas, trabalhadores e parceiros institucionais."',
             'Operações Educacionais': '"Assegurar a excelência acadêmica e a eficiência operacional por meio da padronização estratégica dos processos educacionais, sustentada pela cultura de melhoria contínua baseada em dados, garantindo o desenvolvimento integral do aluno, a formação da equipe pedagógica e o fortalecimento da Metodologia SENAI de Educação Profissional."'
         };
 
-        // ============================================
-        // 1. EXTRAIR JSON DA RESPOSTA DO GOOGLE
-        // ============================================
         function extractJsonFromGoogleResponse(text) {
             let match = text.match(/google\.visualization\.Query\.setResponse\((\{.*\})\)/s);
             if (match) return match[1];
@@ -428,9 +401,6 @@
             return null;
         }
 
-        // ============================================
-        // 2. CARREGAR DADOS DO GOOGLE SHEETS
-        // ============================================
         async function loadFromGoogleSheets() {
             const cached = localStorage.getItem(CONFIG.CACHE_KEY);
             if (cached) {
@@ -489,7 +459,6 @@
                         return '';
                     };
 
-                    // 🔥 TROCAR SEPARADOR DE | PARA ;
                     const temasRaw = getValue(['temas', 'entregas', 'responsabilidades']);
                     const temas = temasRaw ? temasRaw.split(/[;]\s*/).filter(t => t && t.trim()) : [];
 
@@ -530,9 +499,6 @@
             }
         }
 
-        // ============================================
-        // 3. FUNÇÃO PARA IDENTIFICAR COORDENADORES E GERENTES
-        // ============================================
         function isCoordinator(role) {
             if (!role) return false;
             const roleLower = role.toLowerCase();
@@ -549,9 +515,6 @@
                    roleLower.includes('superintendente');
         }
 
-        // ============================================
-        // 4. RENDERIZAR ORGANOGRAMA
-        // ============================================
         function renderHierarchy() {
             const container = document.getElementById('view-hierarchy');
             const gerentes = {
@@ -649,9 +612,6 @@
             container.innerHTML = html;
         }
 
-        // ============================================
-        // 5. RENDERIZAR PESSOAS, PROCESSOS E PROJETOS
-        // ============================================
         function renderDirectory() {
             const container = document.getElementById('view-directory');
             
@@ -710,7 +670,17 @@
                         </div>
                 `;
 
-                for (const [subSec, pessoas] of Object.entries(subGroups)) {
+                // 🔥 ORDENAR AS SUBSEÇÕES: "Sem Coordenação" primeiro, depois as outras em ordem alfabética
+                const subSecKeys = Object.keys(subGroups);
+                const subSecOrdenadas = subSecKeys.sort((a, b) => {
+                    if (a === 'Sem Coordenação') return -1;
+                    if (b === 'Sem Coordenação') return 1;
+                    return a.localeCompare(b);
+                });
+
+                for (const subSec of subSecOrdenadas) {
+                    const pessoas = subGroups[subSec];
+
                     if (subSec !== 'Sem Coordenação') {
                         html += `
                             <div class="bg-${corTag}-50/50 p-3 rounded-xl border border-${corTag}-100">
@@ -726,14 +696,12 @@
                         `;
                     }
 
-                    // 🔥 ORDENAÇÃO CORRETA: Gerentes primeiro, depois coordenadores, depois equipe
                     const gerentesList = pessoas.filter(p => isManager(p.role) && !isCoordinator(p.role));
                     const coordenadores = pessoas.filter(p => isCoordinator(p.role) && !isManager(p.role));
                     const equipe = pessoas.filter(p => !isCoordinator(p.role) && !isManager(p.role));
 
                     html += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="container-${gerencia.replace(/\s/g, '')}-${subSec.replace(/\s/g, '')}">`;
                     
-                    // 👔 GERENTES PRIMEIRO (com destaque dourado)
                     if (gerentesList.length > 0) {
                         html += `<div class="col-span-full"><div class="leader-divider"><span>👔 Gerência</span></div></div>`;
                         gerentesList.forEach(prof => {
@@ -741,7 +709,6 @@
                         });
                     }
 
-                    // ⭐ COORDENADORES
                     if (coordenadores.length > 0) {
                         html += `<div class="col-span-full"><div class="leader-divider"><span>👥 Lideranças</span></div></div>`;
                         coordenadores.forEach(prof => {
@@ -749,7 +716,6 @@
                         });
                     }
 
-                    // 👤 EQUIPE
                     if (equipe.length > 0) {
                         if (gerentesList.length > 0 || coordenadores.length > 0) {
                             html += `<div class="col-span-full"><div class="leader-divider"><span>👤 Equipe</span></div></div>`;
@@ -770,9 +736,6 @@
             container.innerHTML = html;
         }
 
-        // ============================================
-        // 6. CRIAR CARD DE PROFISSIONAL
-        // ============================================
         function createProfessionalCard(prof, isCoordinatorFlag, isManagerFlag) {
             const initials = prof.name ? prof.name.split(' ').filter(w => w.length > 0).map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'XX';
             
@@ -790,7 +753,6 @@
             const coordinatorClass = isCoordinatorFlag ? 'coordinator' : '';
             const starIcon = isCoordinatorFlag ? '<span class="coordinator-star">⭐</span>' : '';
 
-            // Destaque de gerente (borda dourada) - NÃO aplicado para Superintendente
             const isSuperintendente = prof.role && prof.role.toLowerCase().includes('superintendente');
             const managerClass = (isManagerFlag && !isSuperintendente) ? 'gerente-card' : '';
 
@@ -837,7 +799,7 @@
                             </div>
                         </div>
 
-                        ${prof.subSec ? `<span class="tag-sub" style="background:${cores.tagSub}; color:${cores.tagSubText};">${prof.subSec}</span>` : ''}
+                        ${prof.subSec && prof.subSec !== 'Sem Coordenação' ? `<span class="tag-sub" style="background:${cores.tagSub}; color:${cores.tagSubText};">${prof.subSec}</span>` : ''}
 
                         ${contatosHtml}
                     </div>
@@ -852,9 +814,6 @@
             `;
         }
 
-        // ============================================
-        // 7. FUNÇÕES DE BUSCA E FILTRO
-        // ============================================
         function filterProfessionals() {
             const input = document.getElementById('search-input');
             const filter = input.value.toLowerCase().trim();
@@ -948,9 +907,6 @@
             sections.forEach(section => section.classList.remove('hidden'));
         }
 
-        // ============================================
-        // 8. INICIALIZAÇÃO
-        // ============================================
         async function init() {
             try {
                 const data = await loadFromGoogleSheets();
