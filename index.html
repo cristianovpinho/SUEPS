@@ -577,12 +577,6 @@
                 }
             };
 
-            const contagem = {};
-            professionals.forEach(p => {
-                const gerencia = p.gerencia || 'Outros';
-                contagem[gerencia] = (contagem[gerencia] || 0) + 1;
-            });
-
             let html = `
                 <div class="flex flex-col items-center">
                     <div class="w-full max-w-md bg-gradient-to-br from-indigo-900 to-indigo-950 text-white rounded-2xl shadow-xl border-4 border-indigo-400 p-6 text-center relative z-10">
@@ -615,11 +609,7 @@
                             </div>
                         `).join('')}
                     </div>
-                ` : `
-                    <div class="w-full bg-slate-50/70 p-2 rounded-lg border border-slate-200/50 text-center">
-                        <span class="text-[8px] font-bold text-slate-500 uppercase tracking-wider block">Equipe</span>
-                    </div>
-                `;
+                ` : ''; // REMOVIDO o box "Equipe" para Negócios e Operações
 
                 // Proposta de valor para este card
                 const proposta = PROPOSTAS_VALOR[gerencia] || '';
@@ -738,16 +728,17 @@
                         `;
                     }
 
-                    const coordenadores = pessoas.filter(p => isCoordinator(p.role));
-                    const gerentes = pessoas.filter(p => isManager(p.role) && !isCoordinator(p.role));
+                    // Separar por tipo: Gerentes (com destaque), Coordenadores, Equipe
+                    const gerentesList = pessoas.filter(p => isManager(p.role) && !isCoordinator(p.role));
+                    const coordenadores = pessoas.filter(p => isCoordinator(p.role) && !isManager(p.role));
                     const equipe = pessoas.filter(p => !isCoordinator(p.role) && !isManager(p.role));
 
                     html += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="container-${gerencia.replace(/\s/g, '')}-${subSec.replace(/\s/g, '')}">`;
                     
-                    // Gerentes primeiro (com destaque)
-                    if (gerentes.length > 0) {
+                    // GERENTES PRIMEIRO (com destaque)
+                    if (gerentesList.length > 0) {
                         html += `<div class="col-span-full"><div class="leader-divider"><span>👔 Gerência</span></div></div>`;
-                        gerentes.forEach(prof => {
+                        gerentesList.forEach(prof => {
                             html += createProfessionalCard(prof, false, true);
                         });
                     }
@@ -762,7 +753,7 @@
 
                     // Por fim a equipe
                     if (equipe.length > 0) {
-                        if (gerentes.length > 0 || coordenadores.length > 0) {
+                        if (gerentesList.length > 0 || coordenadores.length > 0) {
                             html += `<div class="col-span-full"><div class="leader-divider"><span>👤 Equipe</span></div></div>`;
                         } else {
                             html += `<div class="col-span-full"><div class="leader-divider"><span>👤 Equipe</span></div></div>`;
@@ -803,8 +794,8 @@
             const coordinatorClass = isCoordinatorFlag ? 'coordinator' : '';
             const starIcon = isCoordinatorFlag ? '<span class="coordinator-star">⭐</span>' : '';
 
-            // Destaque de gerente (borda dourada)
-            const managerClass = isManagerFlag ? 'gerente-card' : '';
+            // Destaque de gerente (borda dourada) - NÃO aplicado para Superintendente
+            const managerClass = (isManagerFlag && !prof.role.toLowerCase().includes('superintendente')) ? 'gerente-card' : '';
 
             const temasBadges = (prof.temas && prof.temas.length > 0) ? 
                 prof.temas.map(tema => 
