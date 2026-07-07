@@ -35,27 +35,135 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .coordinator-card {
-            border-left: 4px solid;
-            position: relative;
+        /* ============================================
+           ESTILOS DOS CARDS COM CORES POR GERÊNCIA
+           ============================================ */
+        
+        /* Base para todos os cards */
+        .professional-card {
+            transition: all 0.3s ease;
+            border-width: 2px;
+            border-style: solid;
         }
-        .coordinator-card::before {
-            content: '⭐';
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            font-size: 16px;
-            background: white;
-            border-radius: 50%;
-            padding: 2px 4px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            z-index: 1;
+        .professional-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
         }
+
+        /* 🟢 SOLUÇÕES EDUCACIONAIS - VERDE */
+        .card-solucoes {
+            background: linear-gradient(145deg, #f0fdf4, #dcfce7);
+            border-color: #86efac;
+        }
+        .card-solucoes:hover {
+            border-color: #22c55e;
+            box-shadow: 0 12px 40px rgba(34, 197, 94, 0.15);
+        }
+        .card-solucoes .avatar {
+            background: #86efac;
+            color: #14532d;
+        }
+        .card-solucoes .tag-gerencia {
+            background: #86efac;
+            color: #14532d;
+        }
+        .card-solucoes .tag-sub {
+            background: #bbf7d0;
+            color: #166534;
+        }
+        .card-solucoes .tema-badge {
+            background: #bbf7d0;
+            color: #14532d;
+        }
+        .card-solucoes .tema-badge:hover {
+            background: #86efac;
+        }
+        .card-solucoes.coordinator {
+            border-left: 6px solid #16a34a;
+        }
+        .card-solucoes .coordinator-badge {
+            background: #16a34a;
+            color: white;
+        }
+
+        /* 🔵 NEGÓCIOS EDUCACIONAIS - AZUL */
+        .card-negocios {
+            background: linear-gradient(145deg, #eff6ff, #dbeafe);
+            border-color: #93c5fd;
+        }
+        .card-negocios:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15);
+        }
+        .card-negocios .avatar {
+            background: #93c5fd;
+            color: #1e3a5f;
+        }
+        .card-negocios .tag-gerencia {
+            background: #93c5fd;
+            color: #1e3a5f;
+        }
+        .card-negocios .tag-sub {
+            background: #bfdbfe;
+            color: #1e40af;
+        }
+        .card-negocios .tema-badge {
+            background: #bfdbfe;
+            color: #1e3a5f;
+        }
+        .card-negocios .tema-badge:hover {
+            background: #93c5fd;
+        }
+        .card-negocios.coordinator {
+            border-left: 6px solid #2563eb;
+        }
+        .card-negocios .coordinator-badge {
+            background: #2563eb;
+            color: white;
+        }
+
+        /* 🟠 OPERAÇÕES EDUCACIONAIS - LARANJA/AMBER */
+        .card-operacoes {
+            background: linear-gradient(145deg, #fffbeb, #fef3c7);
+            border-color: #fcd34d;
+        }
+        .card-operacoes:hover {
+            border-color: #f59e0b;
+            box-shadow: 0 12px 40px rgba(245, 158, 11, 0.15);
+        }
+        .card-operacoes .avatar {
+            background: #fcd34d;
+            color: #78350f;
+        }
+        .card-operacoes .tag-gerencia {
+            background: #fcd34d;
+            color: #78350f;
+        }
+        .card-operacoes .tag-sub {
+            background: #fde68a;
+            color: #92400e;
+        }
+        .card-operacoes .tema-badge {
+            background: #fde68a;
+            color: #78350f;
+        }
+        .card-operacoes .tema-badge:hover {
+            background: #fcd34d;
+        }
+        .card-operacoes.coordinator {
+            border-left: 6px solid #d97706;
+        }
+        .card-operacoes .coordinator-badge {
+            background: #d97706;
+            color: white;
+        }
+
+        /* Separador entre Lideranças e Equipe */
         .leader-divider {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin: 8px 0 16px 0;
+            gap: 16px;
+            margin: 12px 0 20px 0;
         }
         .leader-divider::after {
             content: '';
@@ -64,7 +172,7 @@
             background: linear-gradient(to right, #e2e8f0, transparent);
         }
         .leader-divider span {
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 600;
             color: #94a3b8;
             text-transform: uppercase;
@@ -72,9 +180,8 @@
             white-space: nowrap;
         }
 
+        /* Badge de coordenador */
         .coordinator-badge {
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
-            color: #78350f;
             font-size: 8px;
             font-weight: 700;
             padding: 2px 10px;
@@ -82,88 +189,31 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             display: inline-block;
-            border: 1px solid #fcd34d;
+            margin-left: 4px;
         }
 
-        /* Cores das gerências nos cards */
-        .card-emerald {
-            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-            border-color: #6ee7b7;
-        }
-        .card-emerald:hover {
-            border-color: #34d399;
-        }
-        .card-emerald .avatar {
-            background: #a7f3d0;
-            color: #065f46;
-        }
-        .card-emerald .tag {
-            background: #d1fae5;
-            color: #065f46;
-        }
-        .card-emerald .border-left {
-            border-left-color: #10b981;
-        }
-
-        .card-blue {
-            background: linear-gradient(135deg, #eff6ff, #dbeafe);
-            border-color: #93c5fd;
-        }
-        .card-blue:hover {
-            border-color: #60a5fa;
-        }
-        .card-blue .avatar {
-            background: #bfdbfe;
-            color: #1e40af;
-        }
-        .card-blue .tag {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-        .card-blue .border-left {
-            border-left-color: #3b82f6;
-        }
-
-        .card-amber {
-            background: linear-gradient(135deg, #fffbeb, #fef3c7);
-            border-color: #fcd34d;
-        }
-        .card-amber:hover {
-            border-color: #fbbf24;
-        }
-        .card-amber .avatar {
-            background: #fde68a;
-            color: #92400e;
-        }
-        .card-amber .tag {
-            background: #fef3c7;
-            color: #92400e;
-        }
-        .card-amber .border-left {
-            border-left-color: #f59e0b;
-        }
-
-        .card-slate {
-            background: #f8fafc;
-            border-color: #e2e8f0;
-        }
-        .card-slate:hover {
-            border-color: #cbd5e1;
-        }
-        .card-slate .avatar {
-            background: #e2e8f0;
+        /* Tag de líder */
+        .leader-tag {
+            font-size: 7px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            background: rgba(0,0,0,0.06);
             color: #475569;
         }
-        .card-slate .tag {
-            background: #f1f5f9;
-            color: #475569;
-        }
-        .card-slate .border-left {
-            border-left-color: #94a3b8;
-        }
 
-        .card-emerald, .card-blue, .card-amber, .card-slate {
-            transition: all 0.3s ease;
+        /* Estrela do coordenador no canto */
+        .coordinator-star {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            font-size: 16px;
+            background: white;
+            border-radius: 50%;
+            padding: 2px 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
     </style>
 </head>
@@ -607,7 +657,7 @@
         }
 
         // ============================================
-        // 5. RENDERIZAR PESSOAS, PROCESSOS E PROJETOS (COM CORES)
+        // 5. RENDERIZAR PESSOAS, PROCESSOS E PROJETOS
         // ============================================
         function renderDirectory() {
             const container = document.getElementById('view-directory');
@@ -622,12 +672,6 @@
                 `;
                 return;
             }
-
-            const coresPorGerencia = {
-                'Soluções Educacionais': 'emerald',
-                'Negócios Educacionais': 'blue',
-                'Operações Educacionais': 'amber'
-            };
 
             const iconesPorGerencia = {
                 'Soluções Educacionais': 'book-open',
@@ -654,14 +698,20 @@
             let html = '';
 
             for (const [gerencia, subGroups] of Object.entries(grupos)) {
-                const cor = coresPorGerencia[gerencia] || 'slate';
+                // Mapear para a classe CSS correta
+                let cardClass = 'card-slate';
+                let cor = 'slate';
+                if (gerencia === 'Soluções Educacionais') { cardClass = 'card-solucoes'; cor = 'solucoes'; }
+                else if (gerencia === 'Negócios Educacionais') { cardClass = 'card-negocios'; cor = 'negocios'; }
+                else if (gerencia === 'Operações Educacionais') { cardClass = 'card-operacoes'; cor = 'operacoes'; }
+
                 const icone = iconesPorGerencia[gerencia] || 'users';
                 const gerente = gerentesPorGerencia[gerencia] || '';
 
                 html += `
                     <div class="space-y-6" id="sec-${gerencia.replace(/\s/g, '-')}">
-                        <div class="flex items-center gap-3 border-b-2 border-${cor}-500 pb-3">
-                            <div class="bg-${cor}-500 text-white p-2 rounded-xl">
+                        <div class="flex items-center gap-3 border-b-2 pb-3" style="border-color: var(--cor-${cor}, #94a3b8);">
+                            <div class="text-white p-2 rounded-xl" style="background: var(--cor-${cor}, #94a3b8);">
                                 <i data-lucide="${icone}" class="w-6 h-6"></i>
                             </div>
                             <div>
@@ -674,46 +724,45 @@
                 for (const [subSec, pessoas] of Object.entries(subGroups)) {
                     if (subSec !== 'Sem Coordenação') {
                         html += `
-                            <div class="bg-${cor}-50/50 p-3 rounded-xl border border-${cor}-100">
+                            <div class="p-3 rounded-xl border" style="background: var(--cor-${cor}-light, #f1f5f9); border-color: var(--cor-${cor}, #94a3b8);">
                                 <div class="flex justify-between items-center flex-wrap gap-2">
                                     <div>
-                                        <h3 class="font-bold text-${cor}-950 flex items-center gap-2 text-sm sm:text-base">
-                                            <span class="w-2.5 h-2.5 rounded-full bg-${cor}-500"></span>
+                                        <h3 class="font-bold text-slate-800 flex items-center gap-2 text-sm sm:text-base">
+                                            <span class="w-2.5 h-2.5 rounded-full" style="background: var(--cor-${cor}, #94a3b8);"></span>
                                             ${subSec}
                                         </h3>
                                     </div>
                                     <div class="text-right text-xs">
-                                        <span class="font-bold text-${cor}-900">${pessoas.length} profissionais</span>
+                                        <span class="font-bold text-slate-600">${pessoas.length} profissionais</span>
                                     </div>
                                 </div>
                             </div>
                         `;
                     }
 
-                    // 🔥 ORDENAR: Coordenadores primeiro, depois o restante
+                    // ORDENAR: Coordenadores primeiro
                     const coordenadores = pessoas.filter(p => isCoordinator(p.role));
                     const equipe = pessoas.filter(p => !isCoordinator(p.role));
 
                     html += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="container-${gerencia.replace(/\s/g, '')}-${subSec.replace(/\s/g, '')}">`;
                     
-                    // Primeiro os coordenadores (com destaque)
                     if (coordenadores.length > 0) {
                         html += `<div class="col-span-full"><div class="leader-divider"><span>👥 Lideranças</span></div></div>`;
                         coordenadores.forEach(prof => {
-                            html += createProfessionalCard(prof, cor, true);
+                            html += createProfessionalCard(prof, cardClass, true);
                         });
                     }
 
-                    // Depois a equipe (comum)
-                    if (equipe.length > 0 && coordenadores.length > 0) {
-                        html += `<div class="col-span-full"><div class="leader-divider"><span>👤 Equipe</span></div></div>`;
-                    } else if (equipe.length > 0 && coordenadores.length === 0) {
-                        html += `<div class="col-span-full"><div class="leader-divider"><span>👤 Equipe</span></div></div>`;
+                    if (equipe.length > 0) {
+                        if (coordenadores.length > 0) {
+                            html += `<div class="col-span-full"><div class="leader-divider"><span>👤 Equipe</span></div></div>`;
+                        } else {
+                            html += `<div class="col-span-full"><div class="leader-divider"><span>👤 Equipe</span></div></div>`;
+                        }
+                        equipe.forEach(prof => {
+                            html += createProfessionalCard(prof, cardClass, false);
+                        });
                     }
-                    
-                    equipe.forEach(prof => {
-                        html += createProfessionalCard(prof, cor, false);
-                    });
                     
                     html += `</div>`;
                 }
@@ -725,46 +774,37 @@
         }
 
         // ============================================
-        // 6. CRIAR CARD DE PROFISSIONAL (COM CORES DE FUNDO)
+        // 6. CRIAR CARD DE PROFISSIONAL
         // ============================================
-        function createProfessionalCard(prof, cor, isCoordinatorFlag) {
+        function createProfessionalCard(prof, cardClass, isCoordinatorFlag) {
             const initials = prof.name ? prof.name.split(' ').filter(w => w.length > 0).map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'XX';
             
-            // Mapeamento de classes CSS para cada cor
-            const cardClassMap = {
-                'emerald': 'card-emerald',
-                'blue': 'card-blue',
-                'amber': 'card-amber',
-                'slate': 'card-slate'
-            };
-
-            const cardClass = cardClassMap[cor] || 'card-slate';
-            const borderLeftClass = isCoordinatorFlag ? 'border-left' : '';
-
             // Verificar se é um cargo que deve exibir o cargo abaixo do nome
             const cargosComDisplay = ['Superintendente', 'Gerente', 'Coordenador', 'Coord.', 'Coordenadora'];
             const shouldShowRole = cargosComDisplay.some(cargo => 
                 prof.role && prof.role.toLowerCase().includes(cargo.toLowerCase())
             );
 
-            // Badge de coordenador (apenas se for coordenador)
             const coordinatorBadge = isCoordinatorFlag ? `
-                <span class="coordinator-badge ml-1">⭐ Coordenador</span>
+                <span class="coordinator-badge">⭐ Coordenador</span>
             ` : '';
+
+            const coordinatorClass = isCoordinatorFlag ? 'coordinator' : '';
+            const starIcon = isCoordinatorFlag ? '<span class="coordinator-star">⭐</span>' : '';
 
             const temasBadges = (prof.temas && prof.temas.length > 0) ? 
                 prof.temas.map(tema => 
-                    `<span class="tema-badge inline-block bg-white/70 hover:bg-white text-slate-700 text-xs px-2.5 py-1 rounded-lg mr-1.5 mb-1.5 transition-colors cursor-pointer" onclick="setSearch('${tema.replace(/'/g, "\\'")}')">${tema}</span>`
+                    `<span class="tema-badge inline-block text-xs px-2.5 py-1 rounded-lg mr-1.5 mb-1.5 transition-colors cursor-pointer" onclick="setSearch('${tema.replace(/'/g, "\\'")}')">${tema}</span>`
                 ).join('') : 
                 '<span class="text-xs text-slate-400">Nenhum tema cadastrado</span>';
 
-            // Card com cor de fundo da gerência
             return `
-                <div class="professional-card ${cardClass} ${borderLeftClass} rounded-2xl shadow-md border p-5 hover:shadow-xl transition-all duration-300 flex flex-col justify-between" 
+                <div class="professional-card ${cardClass} ${coordinatorClass} rounded-2xl shadow-sm p-5 flex flex-col justify-between relative" 
                      data-name="${(prof.name || '').toLowerCase()}" 
                      data-role="${(prof.role || '').toLowerCase()}" 
                      data-gerencia="${(prof.gerencia || '').toLowerCase()}" 
                      data-temas="${(prof.temas || []).join(' | ').toLowerCase()}">
+                    ${starIcon}
                     <div>
                         <div class="flex items-start gap-3 mb-4">
                             <div class="flex items-center gap-3">
@@ -782,8 +822,8 @@
                         </div>
 
                         <div class="mb-3">
-                            <span class="tag text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">${prof.gerencia || 'Outros'}</span>
-                            ${prof.subSec ? `<span class="bg-white/60 text-slate-600 text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ml-1">${prof.subSec}</span>` : ''}
+                            <span class="tag-gerencia text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">${prof.gerencia || 'Outros'}</span>
+                            ${prof.subSec ? `<span class="tag-sub text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ml-1">${prof.subSec}</span>` : ''}
                         </div>
                     </div>
 
