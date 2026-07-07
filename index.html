@@ -36,132 +36,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Estilos dos cards com cores fixas usando !important */
-        .card-solucoes {
-            background: linear-gradient(145deg, #f0fdf4, #dcfce7) !important;
-            border-color: #86efac !important;
-        }
-        .card-solucoes:hover {
-            border-color: #22c55e !important;
-        }
-        .card-solucoes .avatar {
-            background: #86efac !important;
-            color: #14532d !important;
-        }
-        .card-solucoes .tag-gerencia {
-            background: #86efac !important;
-            color: #14532d !important;
-        }
-        .card-solucoes .tag-sub {
-            background: #bbf7d0 !important;
-            color: #166534 !important;
-        }
-        .card-solucoes .tema-badge {
-            background: #bbf7d0 !important;
-            color: #14532d !important;
-        }
-        .card-solucoes .tema-badge:hover {
-            background: #86efac !important;
-        }
-        .card-solucoes.coordinator {
-            border-left: 6px solid #16a34a !important;
-        }
-        .card-solucoes .coordinator-badge {
-            background: #16a34a !important;
-            color: white !important;
-        }
-
-        .card-negocios {
-            background: linear-gradient(145deg, #eff6ff, #dbeafe) !important;
-            border-color: #93c5fd !important;
-        }
-        .card-negocios:hover {
-            border-color: #3b82f6 !important;
-        }
-        .card-negocios .avatar {
-            background: #93c5fd !important;
-            color: #1e3a5f !important;
-        }
-        .card-negocios .tag-gerencia {
-            background: #93c5fd !important;
-            color: #1e3a5f !important;
-        }
-        .card-negocios .tag-sub {
-            background: #bfdbfe !important;
-            color: #1e40af !important;
-        }
-        .card-negocios .tema-badge {
-            background: #bfdbfe !important;
-            color: #1e3a5f !important;
-        }
-        .card-negocios .tema-badge:hover {
-            background: #93c5fd !important;
-        }
-        .card-negocios.coordinator {
-            border-left: 6px solid #2563eb !important;
-        }
-        .card-negocios .coordinator-badge {
-            background: #2563eb !important;
-            color: white !important;
-        }
-
-        .card-operacoes {
-            background: linear-gradient(145deg, #fffbeb, #fef3c7) !important;
-            border-color: #fcd34d !important;
-        }
-        .card-operacoes:hover {
-            border-color: #f59e0b !important;
-        }
-        .card-operacoes .avatar {
-            background: #fcd34d !important;
-            color: #78350f !important;
-        }
-        .card-operacoes .tag-gerencia {
-            background: #fcd34d !important;
-            color: #78350f !important;
-        }
-        .card-operacoes .tag-sub {
-            background: #fde68a !important;
-            color: #92400e !important;
-        }
-        .card-operacoes .tema-badge {
-            background: #fde68a !important;
-            color: #78350f !important;
-        }
-        .card-operacoes .tema-badge:hover {
-            background: #fcd34d !important;
-        }
-        .card-operacoes.coordinator {
-            border-left: 6px solid #d97706 !important;
-        }
-        .card-operacoes .coordinator-badge {
-            background: #d97706 !important;
-            color: white !important;
-        }
-
-        .card-slate {
-            background: #f8fafc !important;
-            border-color: #e2e8f0 !important;
-        }
-        .card-slate .avatar {
-            background: #e2e8f0 !important;
-            color: #475569 !important;
-        }
-        .card-slate .tag-gerencia {
-            background: #e2e8f0 !important;
-            color: #475569 !important;
-        }
-
-        .professional-card {
-            transition: all 0.3s ease;
-            border-width: 2px;
-            border-style: solid;
-        }
-        .professional-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
-        }
-
         .coordinator-badge {
             font-size: 8px;
             font-weight: 700;
@@ -171,6 +45,8 @@
             letter-spacing: 0.5px;
             display: inline-block;
             margin-left: 4px;
+            background: #16a34a !important;
+            color: white !important;
         }
 
         .coordinator-star {
@@ -182,6 +58,7 @@
             border-radius: 50%;
             padding: 2px 4px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            z-index: 5;
         }
 
         .leader-divider {
@@ -205,11 +82,81 @@
             white-space: nowrap;
         }
 
-        /* CORREÇÃO: Garantir que os estilos sejam aplicados a TODOS os cards */
-        .card-solucoes, .card-negocios, .card-operacoes {
-            /* Garantia extra de que o background será aplicado */
-            background-attachment: fixed !important;
+        /* Estilos base dos cards - sem cores, apenas estrutura */
+        .professional-card {
+            transition: all 0.3s ease;
+            border-width: 2px;
+            border-style: solid;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
+        .professional-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+        }
+
+        .professional-card .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .professional-card .tag-gerencia {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+        }
+
+        .professional-card .tag-sub {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            margin-left: 4px;
+        }
+
+        .professional-card .tema-badge {
+            display: inline-block;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            margin-right: 6px;
+            margin-bottom: 6px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .professional-card .tema-badge:hover {
+            transform: scale(1.05);
+        }
+
+        /* Estilos para coordenadores (apenas borda) */
+        .professional-card.coordinator {
+            border-left-width: 6px !important;
+        }
+
+        /* 🟢 SOLUÇÕES EDUCACIONAIS - cores via JavaScript */
+        /* 🔵 NEGÓCIOS EDUCACIONAIS - cores via JavaScript */
+        /* 🟠 OPERAÇÕES EDUCACIONAIS - cores via JavaScript */
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
@@ -355,6 +302,60 @@
         };
 
         let professionals = [];
+
+        // ============================================
+        // CORES DAS GERÊNCIAS (DEFINIDAS AQUI)
+        // ============================================
+        const CORES_GERENCIAS = {
+            'Soluções Educacionais': {
+                background: 'linear-gradient(145deg, #f0fdf4, #dcfce7)',
+                border: '#86efac',
+                borderHover: '#22c55e',
+                avatar: '#86efac',
+                avatarText: '#14532d',
+                tagGerencia: '#86efac',
+                tagGerenciaText: '#14532d',
+                tagSub: '#bbf7d0',
+                tagSubText: '#166534',
+                temaBadge: '#bbf7d0',
+                temaBadgeText: '#14532d',
+                temaBadgeHover: '#86efac',
+                coordinatorBorder: '#16a34a',
+                coordinatorBadge: '#16a34a'
+            },
+            'Negócios Educacionais': {
+                background: 'linear-gradient(145deg, #eff6ff, #dbeafe)',
+                border: '#93c5fd',
+                borderHover: '#3b82f6',
+                avatar: '#93c5fd',
+                avatarText: '#1e3a5f',
+                tagGerencia: '#93c5fd',
+                tagGerenciaText: '#1e3a5f',
+                tagSub: '#bfdbfe',
+                tagSubText: '#1e40af',
+                temaBadge: '#bfdbfe',
+                temaBadgeText: '#1e3a5f',
+                temaBadgeHover: '#93c5fd',
+                coordinatorBorder: '#2563eb',
+                coordinatorBadge: '#2563eb'
+            },
+            'Operações Educacionais': {
+                background: 'linear-gradient(145deg, #fffbeb, #fef3c7)',
+                border: '#fcd34d',
+                borderHover: '#f59e0b',
+                avatar: '#fcd34d',
+                avatarText: '#78350f',
+                tagGerencia: '#fcd34d',
+                tagGerenciaText: '#78350f',
+                tagSub: '#fde68a',
+                tagSubText: '#92400e',
+                temaBadge: '#fde68a',
+                temaBadgeText: '#78350f',
+                temaBadgeHover: '#fcd34d',
+                coordinatorBorder: '#d97706',
+                coordinatorBadge: '#d97706'
+            }
+        };
 
         // ============================================
         // 1. EXTRAIR JSON DA RESPOSTA DO GOOGLE
@@ -660,17 +661,13 @@
             let html = '';
 
             for (const [gerencia, subGroups] of Object.entries(grupos)) {
-                let cardClass = 'card-slate';
-                let cor = 'slate';
-                if (gerencia === 'Soluções Educacionais') { cardClass = 'card-solucoes'; cor = 'solucoes'; }
-                else if (gerencia === 'Negócios Educacionais') { cardClass = 'card-negocios'; cor = 'negocios'; }
-                else if (gerencia === 'Operações Educacionais') { cardClass = 'card-operacoes'; cor = 'operacoes'; }
+                const cor = CORES_GERENCIAS[gerencia] || null;
+                const corTag = gerencia === 'Soluções Educacionais' ? 'emerald' :
+                               gerencia === 'Negócios Educacionais' ? 'blue' :
+                               gerencia === 'Operações Educacionais' ? 'amber' : 'slate';
 
                 const icone = iconesPorGerencia[gerencia] || 'users';
                 const gerente = gerentesPorGerencia[gerencia] || '';
-
-                const coresMap = { 'solucoes': 'emerald', 'negocios': 'blue', 'operacoes': 'amber' };
-                const corTag = coresMap[cor] || 'slate';
 
                 html += `
                     <div class="space-y-6" id="sec-${gerencia.replace(/\s/g, '-')}">
@@ -712,7 +709,7 @@
                     if (coordenadores.length > 0) {
                         html += `<div class="col-span-full"><div class="leader-divider"><span>👥 Lideranças</span></div></div>`;
                         coordenadores.forEach(prof => {
-                            html += createProfessionalCard(prof, cardClass, true);
+                            html += createProfessionalCard(prof, cor, true);
                         });
                     }
 
@@ -723,7 +720,7 @@
                             html += `<div class="col-span-full"><div class="leader-divider"><span>👤 Equipe</span></div></div>`;
                         }
                         equipe.forEach(prof => {
-                            html += createProfessionalCard(prof, cardClass, false);
+                            html += createProfessionalCard(prof, cor, false);
                         });
                     }
                     
@@ -737,9 +734,9 @@
         }
 
         // ============================================
-        // 6. CRIAR CARD DE PROFISSIONAL - SOLUÇÃO DEFINITIVA
+        // 6. CRIAR CARD DE PROFISSIONAL (COM ESTILOS INLINE)
         // ============================================
-        function createProfessionalCard(prof, cardClass, isCoordinatorFlag) {
+        function createProfessionalCard(prof, cores, isCoordinatorFlag) {
             const initials = prof.name ? prof.name.split(' ').filter(w => w.length > 0).map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'XX';
             
             const cargosComDisplay = ['Superintendente', 'Gerente', 'Coordenador', 'Coord.', 'Coordenadora'];
@@ -754,26 +751,38 @@
             const coordinatorClass = isCoordinatorFlag ? 'coordinator' : '';
             const starIcon = isCoordinatorFlag ? '<span class="coordinator-star">⭐</span>' : '';
 
+            // Se não tiver cores definidas, usar padrão (cinza)
+            const c = cores || {
+                background: '#f8fafc',
+                border: '#e2e8f0',
+                avatar: '#e2e8f0',
+                avatarText: '#475569',
+                tagGerencia: '#e2e8f0',
+                tagGerenciaText: '#475569',
+                tagSub: '#f1f5f9',
+                tagSubText: '#475569',
+                temaBadge: '#f1f5f9',
+                temaBadgeText: '#475569',
+                temaBadgeHover: '#e2e8f0',
+                coordinatorBorder: '#94a3b8'
+            };
+
             const temasBadges = (prof.temas && prof.temas.length > 0) ? 
                 prof.temas.map(tema => 
-                    `<span class="tema-badge inline-block text-xs px-2.5 py-1 rounded-lg mr-1.5 mb-1.5 transition-colors cursor-pointer" onclick="setSearch('${tema.replace(/'/g, "\\'")}')">${tema}</span>`
+                    `<span class="tema-badge" style="background:${c.temaBadge}; color:${c.temaBadgeText};" onclick="setSearch('${tema.replace(/'/g, "\\'")}')">${tema}</span>`
                 ).join('') : 
                 '<span class="text-xs text-slate-400">Nenhum tema cadastrado</span>';
 
-            // 🔥 CORREÇÃO DEFINITIVA: Adicionar estilo inline diretamente no card
-            // Isso garante que a cor seja aplicada independente do CSS
-            const cardStyles = {
-                'card-solucoes': 'background: linear-gradient(145deg, #f0fdf4, #dcfce7); border-color: #86efac;',
-                'card-negocios': 'background: linear-gradient(145deg, #eff6ff, #dbeafe); border-color: #93c5fd;',
-                'card-operacoes': 'background: linear-gradient(145deg, #fffbeb, #fef3c7); border-color: #fcd34d;',
-                'card-slate': 'background: #f8fafc; border-color: #e2e8f0;'
-            };
-
-            const inlineStyle = cardStyles[cardClass] || cardStyles['card-slate'];
+            // Estilos inline do card
+            const cardStyle = `
+                background: ${c.background};
+                border-color: ${c.border};
+                ${isCoordinatorFlag ? `border-left-color: ${c.coordinatorBorder}; border-left-width: 6px;` : ''}
+            `;
 
             return `
-                <div class="professional-card ${cardClass} ${coordinatorClass} rounded-2xl shadow-sm p-5 flex flex-col justify-between relative" 
-                     style="${inlineStyle}"
+                <div class="professional-card ${coordinatorClass}" 
+                     style="${cardStyle}"
                      data-name="${(prof.name || '').toLowerCase()}" 
                      data-role="${(prof.role || '').toLowerCase()}" 
                      data-gerencia="${(prof.gerencia || '').toLowerCase()}" 
@@ -782,7 +791,7 @@
                     <div>
                         <div class="flex items-start gap-3 mb-4">
                             <div class="flex items-center gap-3">
-                                <div class="w-12 h-12 avatar rounded-xl flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+                                <div class="avatar" style="background:${c.avatar}; color:${c.avatarText};">
                                     ${initials}
                                 </div>
                                 <div>
@@ -796,8 +805,8 @@
                         </div>
 
                         <div class="mb-3">
-                            <span class="tag-gerencia text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">${prof.gerencia || 'Outros'}</span>
-                            ${prof.subSec ? `<span class="tag-sub text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ml-1">${prof.subSec}</span>` : ''}
+                            <span class="tag-gerencia" style="background:${c.tagGerencia}; color:${c.tagGerenciaText};">${prof.gerencia || 'Outros'}</span>
+                            ${prof.subSec ? `<span class="tag-sub" style="background:${c.tagSub}; color:${c.tagSubText};">${prof.subSec}</span>` : ''}
                         </div>
                     </div>
 
