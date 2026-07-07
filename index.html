@@ -774,68 +774,69 @@
         }
 
         // ============================================
-        // 6. CRIAR CARD DE PROFISSIONAL
-        // ============================================
-        function createProfessionalCard(prof, cardClass, isCoordinatorFlag) {
-            const initials = prof.name ? prof.name.split(' ').filter(w => w.length > 0).map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'XX';
-            
-            // Verificar se é um cargo que deve exibir o cargo abaixo do nome
-            const cargosComDisplay = ['Superintendente', 'Gerente', 'Coordenador', 'Coord.', 'Coordenadora'];
-            const shouldShowRole = cargosComDisplay.some(cargo => 
-                prof.role && prof.role.toLowerCase().includes(cargo.toLowerCase())
-            );
+// 6. CRIAR CARD DE PROFISSIONAL (CORES PARA TODOS)
+// ============================================
+function createProfessionalCard(prof, cardClass, isCoordinatorFlag) {
+    const initials = prof.name ? prof.name.split(' ').filter(w => w.length > 0).map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'XX';
+    
+    // Verificar se é um cargo que deve exibir o cargo abaixo do nome
+    const cargosComDisplay = ['Superintendente', 'Gerente', 'Coordenador', 'Coord.', 'Coordenadora'];
+    const shouldShowRole = cargosComDisplay.some(cargo => 
+        prof.role && prof.role.toLowerCase().includes(cargo.toLowerCase())
+    );
 
-            const coordinatorBadge = isCoordinatorFlag ? `
-                <span class="coordinator-badge">⭐ Coordenador</span>
-            ` : '';
+    const coordinatorBadge = isCoordinatorFlag ? `
+        <span class="coordinator-badge">⭐ Coordenador</span>
+    ` : '';
 
-            const coordinatorClass = isCoordinatorFlag ? 'coordinator' : '';
-            const starIcon = isCoordinatorFlag ? '<span class="coordinator-star">⭐</span>' : '';
+    // 🔥 CORREÇÃO: A classe coordinator é aplicada para borda, mas o cardClass já tem a cor
+    const coordinatorClass = isCoordinatorFlag ? 'coordinator' : '';
+    const starIcon = isCoordinatorFlag ? '<span class="coordinator-star">⭐</span>' : '';
 
-            const temasBadges = (prof.temas && prof.temas.length > 0) ? 
-                prof.temas.map(tema => 
-                    `<span class="tema-badge inline-block text-xs px-2.5 py-1 rounded-lg mr-1.5 mb-1.5 transition-colors cursor-pointer" onclick="setSearch('${tema.replace(/'/g, "\\'")}')">${tema}</span>`
-                ).join('') : 
-                '<span class="text-xs text-slate-400">Nenhum tema cadastrado</span>';
+    const temasBadges = (prof.temas && prof.temas.length > 0) ? 
+        prof.temas.map(tema => 
+            `<span class="tema-badge inline-block text-xs px-2.5 py-1 rounded-lg mr-1.5 mb-1.5 transition-colors cursor-pointer" onclick="setSearch('${tema.replace(/'/g, "\\'")}')">${tema}</span>`
+        ).join('') : 
+        '<span class="text-xs text-slate-400">Nenhum tema cadastrado</span>';
 
-            return `
-                <div class="professional-card ${cardClass} ${coordinatorClass} rounded-2xl shadow-sm p-5 flex flex-col justify-between relative" 
-                     data-name="${(prof.name || '').toLowerCase()}" 
-                     data-role="${(prof.role || '').toLowerCase()}" 
-                     data-gerencia="${(prof.gerencia || '').toLowerCase()}" 
-                     data-temas="${(prof.temas || []).join(' | ').toLowerCase()}">
-                    ${starIcon}
-                    <div>
-                        <div class="flex items-start gap-3 mb-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-12 h-12 avatar rounded-xl flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
-                                    ${initials}
-                                </div>
-                                <div>
-                                    <div class="flex items-center flex-wrap gap-1">
-                                        <h4 class="font-bold text-slate-900 text-base leading-snug">${prof.name || 'Nome não informado'}</h4>
-                                        ${coordinatorBadge}
-                                    </div>
-                                    ${shouldShowRole ? `<p class="text-xs text-slate-600 font-medium">${prof.role || ''}</p>` : ''}
-                                </div>
+    return `
+        <div class="professional-card ${cardClass} ${coordinatorClass} rounded-2xl shadow-sm p-5 flex flex-col justify-between relative" 
+             data-name="${(prof.name || '').toLowerCase()}" 
+             data-role="${(prof.role || '').toLowerCase()}" 
+             data-gerencia="${(prof.gerencia || '').toLowerCase()}" 
+             data-temas="${(prof.temas || []).join(' | ').toLowerCase()}">
+            ${starIcon}
+            <div>
+                <div class="flex items-start gap-3 mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 avatar rounded-xl flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+                            ${initials}
+                        </div>
+                        <div>
+                            <div class="flex items-center flex-wrap gap-1">
+                                <h4 class="font-bold text-slate-900 text-base leading-snug">${prof.name || 'Nome não informado'}</h4>
+                                ${coordinatorBadge}
                             </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <span class="tag-gerencia text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">${prof.gerencia || 'Outros'}</span>
-                            ${prof.subSec ? `<span class="tag-sub text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ml-1">${prof.subSec}</span>` : ''}
-                        </div>
-                    </div>
-
-                    <div>
-                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">TEMAS</span>
-                        <div class="flex flex-wrap max-h-32 overflow-y-auto pr-1">
-                            ${temasBadges}
+                            ${shouldShowRole ? `<p class="text-xs text-slate-600 font-medium">${prof.role || ''}</p>` : ''}
                         </div>
                     </div>
                 </div>
-            `;
-        }
+
+                <div class="mb-3">
+                    <span class="tag-gerencia text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">${prof.gerencia || 'Outros'}</span>
+                    ${prof.subSec ? `<span class="tag-sub text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ml-1">${prof.subSec}</span>` : ''}
+                </div>
+            </div>
+
+            <div>
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">TEMAS</span>
+                <div class="flex flex-wrap max-h-32 overflow-y-auto pr-1">
+                    ${temasBadges}
+                </div>
+            </div>
+        </div>
+    `;
+}
 
         // ============================================
         // 7. FUNÇÕES DE BUSCA E FILTRO
