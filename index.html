@@ -233,7 +233,7 @@
                 <input 
                     type="text" 
                     id="search-input"
-                    placeholder="Pesquise por temas, projetos ou processos (Ex: MSEP, PSAI, WorldSkills, Futuro.digital, etc.)" 
+                    placeholder="Pesquise por temas, projetos ou processos (Ex: MSEP; PSAI; WorldSkills; Futuro.digital; etc.)" 
                     class="block w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 text-slate-900 placeholder-slate-400 transition-all text-base sm:text-lg"
                     onkeyup="filterProfessionals()"
                 >
@@ -489,8 +489,9 @@
                         return '';
                     };
 
+                    // 🔥 TROCAR SEPARADOR DE | PARA ;
                     const temasRaw = getValue(['temas', 'entregas', 'responsabilidades']);
-                    const temas = temasRaw ? temasRaw.split(/[|,;]\s*/).filter(t => t && t.trim()) : [];
+                    const temas = temasRaw ? temasRaw.split(/[;]\s*/).filter(t => t && t.trim()) : [];
 
                     return {
                         name: getValue(['name', 'nome', 'colaborador']) || '',
@@ -541,11 +542,9 @@
                    roleLower.includes('coordenadora');
         }
 
-        // 🔥 FUNÇÃO MELHORADA para identificar gerentes
         function isManager(role) {
             if (!role) return false;
             const roleLower = role.toLowerCase();
-            // Qualquer cargo que contenha "gerente" ou "superintendente"
             return roleLower.includes('gerente') || 
                    roleLower.includes('superintendente');
         }
@@ -727,7 +726,7 @@
                         `;
                     }
 
-                    // 🔥 ORDENAÇÃO CORRETA: Gerentes primeiro (com destaque), depois coordenadores, depois equipe
+                    // 🔥 ORDENAÇÃO CORRETA: Gerentes primeiro, depois coordenadores, depois equipe
                     const gerentesList = pessoas.filter(p => isManager(p.role) && !isCoordinator(p.role));
                     const coordenadores = pessoas.filter(p => isCoordinator(p.role) && !isManager(p.role));
                     const equipe = pessoas.filter(p => !isCoordinator(p.role) && !isManager(p.role));
@@ -791,7 +790,7 @@
             const coordinatorClass = isCoordinatorFlag ? 'coordinator' : '';
             const starIcon = isCoordinatorFlag ? '<span class="coordinator-star">⭐</span>' : '';
 
-            // 🔥 Destaque de gerente (borda dourada) - NÃO aplicado para Superintendente
+            // Destaque de gerente (borda dourada) - NÃO aplicado para Superintendente
             const isSuperintendente = prof.role && prof.role.toLowerCase().includes('superintendente');
             const managerClass = (isManagerFlag && !isSuperintendente) ? 'gerente-card' : '';
 
