@@ -81,7 +81,7 @@
             white-space: nowrap;
         }
 
-        /* Estrutura dos cards (sem cores fixas) */
+        /* Estrutura dos cards */
         .professional-card {
             transition: all 0.3s ease;
             border-width: 2px;
@@ -298,13 +298,12 @@
         let professionals = [];
 
         // ============================================
-        // PALETA DE CORES (definida centralmente)
+        // PALETA DE CORES (baseada no nome da gerência)
         // ============================================
         const PALETA_CORES = {
-            'emerald': {
+            'Soluções Educacionais': {
                 background: 'linear-gradient(145deg, #f0fdf4, #dcfce7)',
                 border: '#86efac',
-                borderHover: '#22c55e',
                 avatar: '#86efac',
                 avatarText: '#14532d',
                 tagGerencia: '#86efac',
@@ -318,10 +317,9 @@
                 coordinatorBadge: '#16a34a',
                 coordinatorBadgeText: '#ffffff'
             },
-            'blue': {
+            'Negócios Educacionais': {
                 background: 'linear-gradient(145deg, #eff6ff, #dbeafe)',
                 border: '#93c5fd',
-                borderHover: '#3b82f6',
                 avatar: '#93c5fd',
                 avatarText: '#1e3a5f',
                 tagGerencia: '#93c5fd',
@@ -335,10 +333,9 @@
                 coordinatorBadge: '#2563eb',
                 coordinatorBadgeText: '#ffffff'
             },
-            'amber': {
+            'Operações Educacionais': {
                 background: 'linear-gradient(145deg, #fffbeb, #fef3c7)',
                 border: '#fcd34d',
-                borderHover: '#f59e0b',
                 avatar: '#fcd34d',
                 avatarText: '#78350f',
                 tagGerencia: '#fcd34d',
@@ -351,24 +348,25 @@
                 coordinatorBorder: '#d97706',
                 coordinatorBadge: '#d97706',
                 coordinatorBadgeText: '#ffffff'
-            },
-            'slate': {
-                background: '#f8fafc',
-                border: '#e2e8f0',
-                borderHover: '#cbd5e1',
-                avatar: '#e2e8f0',
-                avatarText: '#475569',
-                tagGerencia: '#e2e8f0',
-                tagGerenciaText: '#475569',
-                tagSub: '#f1f5f9',
-                tagSubText: '#475569',
-                temaBadge: '#f1f5f9',
-                temaBadgeText: '#475569',
-                temaBadgeHover: '#e2e8f0',
-                coordinatorBorder: '#94a3b8',
-                coordinatorBadge: '#94a3b8',
-                coordinatorBadgeText: '#ffffff'
             }
+        };
+
+        // Cores padrão (fallback)
+        const CORES_PADRAO = {
+            background: '#f8fafc',
+            border: '#e2e8f0',
+            avatar: '#e2e8f0',
+            avatarText: '#475569',
+            tagGerencia: '#e2e8f0',
+            tagGerenciaText: '#475569',
+            tagSub: '#f1f5f9',
+            tagSubText: '#475569',
+            temaBadge: '#f1f5f9',
+            temaBadgeText: '#475569',
+            temaBadgeHover: '#e2e8f0',
+            coordinatorBorder: '#94a3b8',
+            coordinatorBadge: '#94a3b8',
+            coordinatorBadgeText: '#ffffff'
         };
 
         // ============================================
@@ -420,7 +418,7 @@
                 if (rows.length > 0 && rows[0].c) {
                     const firstRowValues = rows[0].c.map(cell => cell ? cell.v : '');
                     const isHeaderRow = firstRowValues.some(v => 
-                        ['name', 'nome', 'role', 'cargo', 'gerencia', 'email', 'cor'].some(h => 
+                        ['name', 'nome', 'role', 'cargo', 'gerencia', 'email'].some(h => 
                             v && v.toLowerCase().includes(h)
                         )
                     );
@@ -450,16 +448,12 @@
                     const temasRaw = getValue(['temas', 'entregas', 'responsabilidades']);
                     const temas = temasRaw ? temasRaw.split(/[|,;]\s*/).filter(t => t && t.trim()) : [];
 
-                    // 🔥 LER A COR DA PLANILHA
-                    const cor = getValue(['cor', 'color']) || 'slate';
-
                     return {
                         name: getValue(['name', 'nome', 'colaborador']) || '',
                         role: getValue(['role', 'cargo', 'funcao']) || '',
                         gerencia: getValue(['gerencia', 'gerência', 'area']) || '',
                         subSec: getValue(['subsec', 'subSec', 'coordenacao', 'coordenação']) || '',
-                        temas: temas,
-                        cor: cor.toLowerCase().trim() // 'emerald', 'blue', 'amber', 'slate'
+                        temas: temas
                     };
                 });
 
@@ -469,7 +463,6 @@
                 }
 
                 console.log(`✅ ${filteredData.length} profissionais carregados do Google Sheets`);
-                console.log('📋 Cores encontradas:', filteredData.map(p => p.cor).filter((v,i,a) => a.indexOf(v) === i));
 
                 localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify({ data: filteredData, timestamp: Date.now() }));
                 return filteredData;
@@ -753,21 +746,13 @@
         }
 
         // ============================================
-        // 6. CRIAR CARD DE PROFISSIONAL (BUSCANDO A COR DA PLANILHA)
+        // 6. CRIAR CARD DE PROFISSIONAL
         // ============================================
         function createProfessionalCard(prof, isCoordinatorFlag) {
             const initials = prof.name ? prof.name.split(' ').filter(w => w.length > 0).map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'XX';
             
-            // 🔥 BUSCAR A COR DO PROFISSIONAL NA PLANILHA
-            // Se não tiver cor definida, usar 'slate' como padrão
-            const corKey = prof.cor && PALETA_CORES[prof.cor] ? prof.cor : 'slate';
-            const cores = PALETA_CORES[corKey];
-            
-            // Se a cor não existir na paleta, usar slate
-            if (!cores) {
-                console.warn(`⚠️ Cor "${prof.cor}" não encontrada na paleta. Usando "slate".`);
-                return createProfessionalCard({ ...prof, cor: 'slate' }, isCoordinatorFlag);
-            }
+            // Buscar as cores baseadas na gerência
+            const cores = PALETA_CORES[prof.gerencia] || CORES_PADRAO;
 
             const cargosComDisplay = ['Superintendente', 'Gerente', 'Coordenador', 'Coord.', 'Coordenadora'];
             const shouldShowRole = cargosComDisplay.some(cargo => 
@@ -787,7 +772,6 @@
                 ).join('') : 
                 '<span class="text-xs text-slate-400">Nenhum tema cadastrado</span>';
 
-            // Estilos inline do card (usando as cores da planilha)
             const cardStyle = `
                 background: ${cores.background};
                 border-color: ${cores.border};
@@ -958,7 +942,6 @@
                 
                 console.log('✅ Aplicação inicializada com sucesso!');
                 console.log(`📊 Total de profissionais: ${professionals.length}`);
-                console.log('📋 Cores disponíveis:', Object.keys(PALETA_CORES));
                 
             } catch (error) {
                 console.error('❌ Erro na inicialização:', error);
@@ -973,7 +956,8 @@
                             1️⃣ A planilha está publicada?<br>
                             <span style="font-size:12px;color:#64748b;">Arquivo → Compartilhar → Publicar na web</span><br><br>
                             2️⃣ A aba se chama <code style="background:#fee2e2;padding:2px 8px;border-radius:4px;">Dados</code>?<br><br>
-                            3️⃣ Existe uma coluna chamada <code style="background:#fee2e2;padding:2px 8px;border-radius:4px;">cor</code> na planilha?
+                            3️⃣ Os cabeçalhos estão corretos?<br>
+                            <span style="font-size:12px;color:#64748b;">name, role, gerencia, email, phone, temas</span>
                         </div>
                         <br>
                         <button onclick="location.reload()" style="background:#4f46e5;color:white;padding:8px 24px;border-radius:8px;border:none;cursor:pointer;font-weight:600;margin-right:8px;">
