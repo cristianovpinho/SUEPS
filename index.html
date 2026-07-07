@@ -42,13 +42,14 @@
         .coordinator-card::before {
             content: '⭐';
             position: absolute;
-            top: -10px;
-            right: -10px;
-            font-size: 18px;
+            top: -8px;
+            right: -8px;
+            font-size: 16px;
             background: white;
             border-radius: 50%;
-            padding: 2px;
+            padding: 2px 4px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 1;
         }
         .leader-divider {
             display: flex;
@@ -82,6 +83,87 @@
             letter-spacing: 0.5px;
             display: inline-block;
             border: 1px solid #fcd34d;
+        }
+
+        /* Cores das gerências nos cards */
+        .card-emerald {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border-color: #6ee7b7;
+        }
+        .card-emerald:hover {
+            border-color: #34d399;
+        }
+        .card-emerald .avatar {
+            background: #a7f3d0;
+            color: #065f46;
+        }
+        .card-emerald .tag {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .card-emerald .border-left {
+            border-left-color: #10b981;
+        }
+
+        .card-blue {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border-color: #93c5fd;
+        }
+        .card-blue:hover {
+            border-color: #60a5fa;
+        }
+        .card-blue .avatar {
+            background: #bfdbfe;
+            color: #1e40af;
+        }
+        .card-blue .tag {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .card-blue .border-left {
+            border-left-color: #3b82f6;
+        }
+
+        .card-amber {
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            border-color: #fcd34d;
+        }
+        .card-amber:hover {
+            border-color: #fbbf24;
+        }
+        .card-amber .avatar {
+            background: #fde68a;
+            color: #92400e;
+        }
+        .card-amber .tag {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .card-amber .border-left {
+            border-left-color: #f59e0b;
+        }
+
+        .card-slate {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+        .card-slate:hover {
+            border-color: #cbd5e1;
+        }
+        .card-slate .avatar {
+            background: #e2e8f0;
+            color: #475569;
+        }
+        .card-slate .tag {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .card-slate .border-left {
+            border-left-color: #94a3b8;
+        }
+
+        .card-emerald, .card-blue, .card-amber, .card-slate {
+            transition: all 0.3s ease;
         }
     </style>
 </head>
@@ -374,7 +456,7 @@
         }
 
         // ============================================
-        // 3. FUNÇÃO PARA IDENTIFICAR COORDENADORES E LÍDERES
+        // 3. FUNÇÃO PARA IDENTIFICAR COORDENADORES
         // ============================================
         function isCoordinator(role) {
             if (!role) return false;
@@ -383,14 +465,6 @@
                    roleLower.includes('coord.') || 
                    roleLower.includes('coord ') ||
                    roleLower.includes('coordenadora');
-        }
-
-        function isLeader(role) {
-            if (!role) return false;
-            const roleLower = role.toLowerCase();
-            return roleLower.includes('gerente') || 
-                   roleLower.includes('superintendente') ||
-                   isCoordinator(role);
         }
 
         // ============================================
@@ -533,7 +607,7 @@
         }
 
         // ============================================
-        // 5. RENDERIZAR PESSOAS, PROCESSOS E PROJETOS (COM COORDENADORES EM DESTAQUE)
+        // 5. RENDERIZAR PESSOAS, PROCESSOS E PROJETOS (COM CORES)
         // ============================================
         function renderDirectory() {
             const container = document.getElementById('view-directory');
@@ -651,55 +725,21 @@
         }
 
         // ============================================
-        // 6. CRIAR CARD DE PROFISSIONAL
+        // 6. CRIAR CARD DE PROFISSIONAL (COM CORES DE FUNDO)
         // ============================================
         function createProfessionalCard(prof, cor, isCoordinatorFlag) {
             const initials = prof.name ? prof.name.split(' ').filter(w => w.length > 0).map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'XX';
             
-            const cores = {
-                'emerald': {
-                    bg: 'bg-emerald-50',
-                    border: 'border-emerald-200',
-                    text: 'text-emerald-800',
-                    avatar: 'bg-emerald-100 text-emerald-800',
-                    badge: 'bg-emerald-100 text-emerald-700',
-                    hover: 'hover:border-emerald-300',
-                    tag: 'bg-emerald-50 text-emerald-700',
-                    borderLeft: 'border-emerald-500'
-                },
-                'blue': {
-                    bg: 'bg-blue-50',
-                    border: 'border-blue-200',
-                    text: 'text-blue-800',
-                    avatar: 'bg-blue-100 text-blue-800',
-                    badge: 'bg-blue-100 text-blue-700',
-                    hover: 'hover:border-blue-300',
-                    tag: 'bg-blue-50 text-blue-700',
-                    borderLeft: 'border-blue-500'
-                },
-                'amber': {
-                    bg: 'bg-amber-50',
-                    border: 'border-amber-200',
-                    text: 'text-amber-800',
-                    avatar: 'bg-amber-100 text-amber-800',
-                    badge: 'bg-amber-100 text-amber-700',
-                    hover: 'hover:border-amber-300',
-                    tag: 'bg-amber-50 text-amber-700',
-                    borderLeft: 'border-amber-500'
-                },
-                'slate': {
-                    bg: 'bg-slate-50',
-                    border: 'border-slate-200',
-                    text: 'text-slate-800',
-                    avatar: 'bg-slate-100 text-slate-700',
-                    badge: 'bg-slate-100 text-slate-700',
-                    hover: 'hover:border-slate-300',
-                    tag: 'bg-slate-50 text-slate-700',
-                    borderLeft: 'border-slate-400'
-                }
+            // Mapeamento de classes CSS para cada cor
+            const cardClassMap = {
+                'emerald': 'card-emerald',
+                'blue': 'card-blue',
+                'amber': 'card-amber',
+                'slate': 'card-slate'
             };
 
-            const c = cores[cor] || cores.slate;
+            const cardClass = cardClassMap[cor] || 'card-slate';
+            const borderLeftClass = isCoordinatorFlag ? 'border-left' : '';
 
             // Verificar se é um cargo que deve exibir o cargo abaixo do nome
             const cargosComDisplay = ['Superintendente', 'Gerente', 'Coordenador', 'Coord.', 'Coordenadora'];
@@ -707,26 +747,20 @@
                 prof.role && prof.role.toLowerCase().includes(cargo.toLowerCase())
             );
 
-            // Badge de coordenador
+            // Badge de coordenador (apenas se for coordenador)
             const coordinatorBadge = isCoordinatorFlag ? `
                 <span class="coordinator-badge ml-1">⭐ Coordenador</span>
             ` : '';
 
-            const isLeaderFlag = isLeader(prof.role);
-
             const temasBadges = (prof.temas && prof.temas.length > 0) ? 
                 prof.temas.map(tema => 
-                    `<span class="tema-badge inline-block bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-2.5 py-1 rounded-lg mr-1.5 mb-1.5 transition-colors cursor-pointer" onclick="setSearch('${tema.replace(/'/g, "\\'")}')">${tema}</span>`
+                    `<span class="tema-badge inline-block bg-white/70 hover:bg-white text-slate-700 text-xs px-2.5 py-1 rounded-lg mr-1.5 mb-1.5 transition-colors cursor-pointer" onclick="setSearch('${tema.replace(/'/g, "\\'")}')">${tema}</span>`
                 ).join('') : 
                 '<span class="text-xs text-slate-400">Nenhum tema cadastrado</span>';
 
-            // Card com destaque para coordenadores
-            const cardClass = isCoordinatorFlag ? 
-                `coordinator-card ${c.borderLeft} bg-white rounded-2xl shadow-md border ${c.border} p-5 hover:shadow-xl transition-all duration-300 flex flex-col justify-between ${c.hover}` :
-                `bg-white rounded-2xl shadow-md border ${c.border} p-5 hover:shadow-xl transition-all duration-300 flex flex-col justify-between ${c.hover}`;
-
+            // Card com cor de fundo da gerência
             return `
-                <div class="professional-card ${cardClass}" 
+                <div class="professional-card ${cardClass} ${borderLeftClass} rounded-2xl shadow-md border p-5 hover:shadow-xl transition-all duration-300 flex flex-col justify-between" 
                      data-name="${(prof.name || '').toLowerCase()}" 
                      data-role="${(prof.role || '').toLowerCase()}" 
                      data-gerencia="${(prof.gerencia || '').toLowerCase()}" 
@@ -734,7 +768,7 @@
                     <div>
                         <div class="flex items-start gap-3 mb-4">
                             <div class="flex items-center gap-3">
-                                <div class="w-12 h-12 ${c.avatar} rounded-xl flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+                                <div class="w-12 h-12 avatar rounded-xl flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
                                     ${initials}
                                 </div>
                                 <div>
@@ -742,20 +776,19 @@
                                         <h4 class="font-bold text-slate-900 text-base leading-snug">${prof.name || 'Nome não informado'}</h4>
                                         ${coordinatorBadge}
                                     </div>
-                                    ${shouldShowRole ? `<p class="text-xs text-slate-500 font-medium">${prof.role || ''}</p>` : ''}
+                                    ${shouldShowRole ? `<p class="text-xs text-slate-600 font-medium">${prof.role || ''}</p>` : ''}
                                 </div>
                             </div>
-                            ${isLeaderFlag ? `<span class="${c.badge} text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">Líder</span>` : ''}
                         </div>
 
                         <div class="mb-3">
-                            <span class="${c.tag} text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">${prof.gerencia || 'Outros'}</span>
-                            ${prof.subSec ? `<span class="bg-slate-100 text-slate-600 text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ml-1">${prof.subSec}</span>` : ''}
+                            <span class="tag text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">${prof.gerencia || 'Outros'}</span>
+                            ${prof.subSec ? `<span class="bg-white/60 text-slate-600 text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ml-1">${prof.subSec}</span>` : ''}
                         </div>
                     </div>
 
                     <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">TEMAS</span>
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">TEMAS</span>
                         <div class="flex flex-wrap max-h-32 overflow-y-auto pr-1">
                             ${temasBadges}
                         </div>
