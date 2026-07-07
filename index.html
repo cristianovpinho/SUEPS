@@ -36,6 +36,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* Badge de coordenador */
         .coordinator-badge {
             font-size: 8px;
             font-weight: 700;
@@ -45,8 +46,6 @@
             letter-spacing: 0.5px;
             display: inline-block;
             margin-left: 4px;
-            background: #16a34a !important;
-            color: white !important;
         }
 
         .coordinator-star {
@@ -82,7 +81,7 @@
             white-space: nowrap;
         }
 
-        /* Estilos base dos cards - sem cores, apenas estrutura */
+        /* Estrutura dos cards (sem cores fixas) */
         .professional-card {
             transition: all 0.3s ease;
             border-width: 2px;
@@ -149,14 +148,9 @@
             transform: scale(1.05);
         }
 
-        /* Estilos para coordenadores (apenas borda) */
         .professional-card.coordinator {
             border-left-width: 6px !important;
         }
-
-        /* 🟢 SOLUÇÕES EDUCACIONAIS - cores via JavaScript */
-        /* 🔵 NEGÓCIOS EDUCACIONAIS - cores via JavaScript */
-        /* 🟠 OPERAÇÕES EDUCACIONAIS - cores via JavaScript */
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
@@ -304,10 +298,10 @@
         let professionals = [];
 
         // ============================================
-        // CORES DAS GERÊNCIAS (DEFINIDAS AQUI)
+        // PALETA DE CORES (definida centralmente)
         // ============================================
-        const CORES_GERENCIAS = {
-            'Soluções Educacionais': {
+        const PALETA_CORES = {
+            'emerald': {
                 background: 'linear-gradient(145deg, #f0fdf4, #dcfce7)',
                 border: '#86efac',
                 borderHover: '#22c55e',
@@ -321,9 +315,10 @@
                 temaBadgeText: '#14532d',
                 temaBadgeHover: '#86efac',
                 coordinatorBorder: '#16a34a',
-                coordinatorBadge: '#16a34a'
+                coordinatorBadge: '#16a34a',
+                coordinatorBadgeText: '#ffffff'
             },
-            'Negócios Educacionais': {
+            'blue': {
                 background: 'linear-gradient(145deg, #eff6ff, #dbeafe)',
                 border: '#93c5fd',
                 borderHover: '#3b82f6',
@@ -337,9 +332,10 @@
                 temaBadgeText: '#1e3a5f',
                 temaBadgeHover: '#93c5fd',
                 coordinatorBorder: '#2563eb',
-                coordinatorBadge: '#2563eb'
+                coordinatorBadge: '#2563eb',
+                coordinatorBadgeText: '#ffffff'
             },
-            'Operações Educacionais': {
+            'amber': {
                 background: 'linear-gradient(145deg, #fffbeb, #fef3c7)',
                 border: '#fcd34d',
                 borderHover: '#f59e0b',
@@ -353,7 +349,25 @@
                 temaBadgeText: '#78350f',
                 temaBadgeHover: '#fcd34d',
                 coordinatorBorder: '#d97706',
-                coordinatorBadge: '#d97706'
+                coordinatorBadge: '#d97706',
+                coordinatorBadgeText: '#ffffff'
+            },
+            'slate': {
+                background: '#f8fafc',
+                border: '#e2e8f0',
+                borderHover: '#cbd5e1',
+                avatar: '#e2e8f0',
+                avatarText: '#475569',
+                tagGerencia: '#e2e8f0',
+                tagGerenciaText: '#475569',
+                tagSub: '#f1f5f9',
+                tagSubText: '#475569',
+                temaBadge: '#f1f5f9',
+                temaBadgeText: '#475569',
+                temaBadgeHover: '#e2e8f0',
+                coordinatorBorder: '#94a3b8',
+                coordinatorBadge: '#94a3b8',
+                coordinatorBadgeText: '#ffffff'
             }
         };
 
@@ -406,7 +420,7 @@
                 if (rows.length > 0 && rows[0].c) {
                     const firstRowValues = rows[0].c.map(cell => cell ? cell.v : '');
                     const isHeaderRow = firstRowValues.some(v => 
-                        ['name', 'nome', 'role', 'cargo', 'gerencia', 'email'].some(h => 
+                        ['name', 'nome', 'role', 'cargo', 'gerencia', 'email', 'cor'].some(h => 
                             v && v.toLowerCase().includes(h)
                         )
                     );
@@ -436,12 +450,16 @@
                     const temasRaw = getValue(['temas', 'entregas', 'responsabilidades']);
                     const temas = temasRaw ? temasRaw.split(/[|,;]\s*/).filter(t => t && t.trim()) : [];
 
+                    // 🔥 LER A COR DA PLANILHA
+                    const cor = getValue(['cor', 'color']) || 'slate';
+
                     return {
                         name: getValue(['name', 'nome', 'colaborador']) || '',
                         role: getValue(['role', 'cargo', 'funcao']) || '',
                         gerencia: getValue(['gerencia', 'gerência', 'area']) || '',
                         subSec: getValue(['subsec', 'subSec', 'coordenacao', 'coordenação']) || '',
-                        temas: temas
+                        temas: temas,
+                        cor: cor.toLowerCase().trim() // 'emerald', 'blue', 'amber', 'slate'
                     };
                 });
 
@@ -451,6 +469,8 @@
                 }
 
                 console.log(`✅ ${filteredData.length} profissionais carregados do Google Sheets`);
+                console.log('📋 Cores encontradas:', filteredData.map(p => p.cor).filter((v,i,a) => a.indexOf(v) === i));
+
                 localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify({ data: filteredData, timestamp: Date.now() }));
                 return filteredData;
 
@@ -661,7 +681,6 @@
             let html = '';
 
             for (const [gerencia, subGroups] of Object.entries(grupos)) {
-                const cor = CORES_GERENCIAS[gerencia] || null;
                 const corTag = gerencia === 'Soluções Educacionais' ? 'emerald' :
                                gerencia === 'Negócios Educacionais' ? 'blue' :
                                gerencia === 'Operações Educacionais' ? 'amber' : 'slate';
@@ -709,7 +728,7 @@
                     if (coordenadores.length > 0) {
                         html += `<div class="col-span-full"><div class="leader-divider"><span>👥 Lideranças</span></div></div>`;
                         coordenadores.forEach(prof => {
-                            html += createProfessionalCard(prof, cor, true);
+                            html += createProfessionalCard(prof, true);
                         });
                     }
 
@@ -720,7 +739,7 @@
                             html += `<div class="col-span-full"><div class="leader-divider"><span>👤 Equipe</span></div></div>`;
                         }
                         equipe.forEach(prof => {
-                            html += createProfessionalCard(prof, cor, false);
+                            html += createProfessionalCard(prof, false);
                         });
                     }
                     
@@ -734,50 +753,45 @@
         }
 
         // ============================================
-        // 6. CRIAR CARD DE PROFISSIONAL (COM ESTILOS INLINE)
+        // 6. CRIAR CARD DE PROFISSIONAL (BUSCANDO A COR DA PLANILHA)
         // ============================================
-        function createProfessionalCard(prof, cores, isCoordinatorFlag) {
+        function createProfessionalCard(prof, isCoordinatorFlag) {
             const initials = prof.name ? prof.name.split(' ').filter(w => w.length > 0).map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'XX';
             
+            // 🔥 BUSCAR A COR DO PROFISSIONAL NA PLANILHA
+            // Se não tiver cor definida, usar 'slate' como padrão
+            const corKey = prof.cor && PALETA_CORES[prof.cor] ? prof.cor : 'slate';
+            const cores = PALETA_CORES[corKey];
+            
+            // Se a cor não existir na paleta, usar slate
+            if (!cores) {
+                console.warn(`⚠️ Cor "${prof.cor}" não encontrada na paleta. Usando "slate".`);
+                return createProfessionalCard({ ...prof, cor: 'slate' }, isCoordinatorFlag);
+            }
+
             const cargosComDisplay = ['Superintendente', 'Gerente', 'Coordenador', 'Coord.', 'Coordenadora'];
             const shouldShowRole = cargosComDisplay.some(cargo => 
                 prof.role && prof.role.toLowerCase().includes(cargo.toLowerCase())
             );
 
             const coordinatorBadge = isCoordinatorFlag ? `
-                <span class="coordinator-badge">⭐ Coordenador</span>
+                <span class="coordinator-badge" style="background:${cores.coordinatorBadge}; color:${cores.coordinatorBadgeText};">⭐ Coordenador</span>
             ` : '';
 
             const coordinatorClass = isCoordinatorFlag ? 'coordinator' : '';
             const starIcon = isCoordinatorFlag ? '<span class="coordinator-star">⭐</span>' : '';
 
-            // Se não tiver cores definidas, usar padrão (cinza)
-            const c = cores || {
-                background: '#f8fafc',
-                border: '#e2e8f0',
-                avatar: '#e2e8f0',
-                avatarText: '#475569',
-                tagGerencia: '#e2e8f0',
-                tagGerenciaText: '#475569',
-                tagSub: '#f1f5f9',
-                tagSubText: '#475569',
-                temaBadge: '#f1f5f9',
-                temaBadgeText: '#475569',
-                temaBadgeHover: '#e2e8f0',
-                coordinatorBorder: '#94a3b8'
-            };
-
             const temasBadges = (prof.temas && prof.temas.length > 0) ? 
                 prof.temas.map(tema => 
-                    `<span class="tema-badge" style="background:${c.temaBadge}; color:${c.temaBadgeText};" onclick="setSearch('${tema.replace(/'/g, "\\'")}')">${tema}</span>`
+                    `<span class="tema-badge" style="background:${cores.temaBadge}; color:${cores.temaBadgeText};" onclick="setSearch('${tema.replace(/'/g, "\\'")}')">${tema}</span>`
                 ).join('') : 
                 '<span class="text-xs text-slate-400">Nenhum tema cadastrado</span>';
 
-            // Estilos inline do card
+            // Estilos inline do card (usando as cores da planilha)
             const cardStyle = `
-                background: ${c.background};
-                border-color: ${c.border};
-                ${isCoordinatorFlag ? `border-left-color: ${c.coordinatorBorder}; border-left-width: 6px;` : ''}
+                background: ${cores.background};
+                border-color: ${cores.border};
+                ${isCoordinatorFlag ? `border-left-color: ${cores.coordinatorBorder}; border-left-width: 6px;` : ''}
             `;
 
             return `
@@ -791,7 +805,7 @@
                     <div>
                         <div class="flex items-start gap-3 mb-4">
                             <div class="flex items-center gap-3">
-                                <div class="avatar" style="background:${c.avatar}; color:${c.avatarText};">
+                                <div class="avatar" style="background:${cores.avatar}; color:${cores.avatarText};">
                                     ${initials}
                                 </div>
                                 <div>
@@ -805,8 +819,8 @@
                         </div>
 
                         <div class="mb-3">
-                            <span class="tag-gerencia" style="background:${c.tagGerencia}; color:${c.tagGerenciaText};">${prof.gerencia || 'Outros'}</span>
-                            ${prof.subSec ? `<span class="tag-sub" style="background:${c.tagSub}; color:${c.tagSubText};">${prof.subSec}</span>` : ''}
+                            <span class="tag-gerencia" style="background:${cores.tagGerencia}; color:${cores.tagGerenciaText};">${prof.gerencia || 'Outros'}</span>
+                            ${prof.subSec ? `<span class="tag-sub" style="background:${cores.tagSub}; color:${cores.tagSubText};">${prof.subSec}</span>` : ''}
                         </div>
                     </div>
 
@@ -944,6 +958,7 @@
                 
                 console.log('✅ Aplicação inicializada com sucesso!');
                 console.log(`📊 Total de profissionais: ${professionals.length}`);
+                console.log('📋 Cores disponíveis:', Object.keys(PALETA_CORES));
                 
             } catch (error) {
                 console.error('❌ Erro na inicialização:', error);
@@ -957,7 +972,8 @@
                             <strong>🔧 Verifique:</strong><br><br>
                             1️⃣ A planilha está publicada?<br>
                             <span style="font-size:12px;color:#64748b;">Arquivo → Compartilhar → Publicar na web</span><br><br>
-                            2️⃣ A aba se chama <code style="background:#fee2e2;padding:2px 8px;border-radius:4px;">Dados</code>?
+                            2️⃣ A aba se chama <code style="background:#fee2e2;padding:2px 8px;border-radius:4px;">Dados</code>?<br><br>
+                            3️⃣ Existe uma coluna chamada <code style="background:#fee2e2;padding:2px 8px;border-radius:4px;">cor</code> na planilha?
                         </div>
                         <br>
                         <button onclick="location.reload()" style="background:#4f46e5;color:white;padding:8px 24px;border-radius:8px;border:none;cursor:pointer;font-weight:600;margin-right:8px;">
