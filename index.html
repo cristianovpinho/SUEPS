@@ -298,53 +298,59 @@
         let professionals = [];
 
         // ============================================
-        // PALETA DE CORES (baseada no nome da gerência)
+        // 🎨 CORES EXATAS DO ORGANOGRAMA
         // ============================================
         const PALETA_CORES = {
             'Soluções Educacionais': {
-                background: 'linear-gradient(145deg, #f0fdf4, #dcfce7)',
-                border: '#86efac',
-                avatar: '#86efac',
-                avatarText: '#14532d',
-                tagGerencia: '#86efac',
-                tagGerenciaText: '#14532d',
-                tagSub: '#bbf7d0',
-                tagSubText: '#166534',
-                temaBadge: '#bbf7d0',
-                temaBadgeText: '#14532d',
-                temaBadgeHover: '#86efac',
-                coordinatorBorder: '#16a34a',
-                coordinatorBadge: '#16a34a',
+                // Fundo do card - igual ao fundo do card da gerência no organograma
+                background: '#ecfdf5',
+                // Borda - igual à cor do badge "Gerência de Soluções Educacionais"
+                border: '#10b981',
+                // Avatar - tom mais forte da cor
+                avatar: '#34d399',
+                avatarText: '#064e3b',
+                // Tags
+                tagGerencia: '#10b981',
+                tagGerenciaText: '#ffffff',
+                tagSub: '#d1fae5',
+                tagSubText: '#065f46',
+                // Temas
+                temaBadge: '#d1fae5',
+                temaBadgeText: '#065f46',
+                temaBadgeHover: '#a7f3d0',
+                // Coordenador
+                coordinatorBorder: '#059669',
+                coordinatorBadge: '#059669',
                 coordinatorBadgeText: '#ffffff'
             },
             'Negócios Educacionais': {
-                background: 'linear-gradient(145deg, #eff6ff, #dbeafe)',
-                border: '#93c5fd',
-                avatar: '#93c5fd',
+                background: '#eff6ff',
+                border: '#3b82f6',
+                avatar: '#60a5fa',
                 avatarText: '#1e3a5f',
-                tagGerencia: '#93c5fd',
-                tagGerenciaText: '#1e3a5f',
-                tagSub: '#bfdbfe',
+                tagGerencia: '#3b82f6',
+                tagGerenciaText: '#ffffff',
+                tagSub: '#dbeafe',
                 tagSubText: '#1e40af',
-                temaBadge: '#bfdbfe',
-                temaBadgeText: '#1e3a5f',
-                temaBadgeHover: '#93c5fd',
+                temaBadge: '#dbeafe',
+                temaBadgeText: '#1e40af',
+                temaBadgeHover: '#bfdbfe',
                 coordinatorBorder: '#2563eb',
                 coordinatorBadge: '#2563eb',
                 coordinatorBadgeText: '#ffffff'
             },
             'Operações Educacionais': {
-                background: 'linear-gradient(145deg, #fffbeb, #fef3c7)',
-                border: '#fcd34d',
-                avatar: '#fcd34d',
+                background: '#fffbeb',
+                border: '#f59e0b',
+                avatar: '#fbbf24',
                 avatarText: '#78350f',
-                tagGerencia: '#fcd34d',
-                tagGerenciaText: '#78350f',
-                tagSub: '#fde68a',
+                tagGerencia: '#f59e0b',
+                tagGerenciaText: '#ffffff',
+                tagSub: '#fef3c7',
                 tagSubText: '#92400e',
-                temaBadge: '#fde68a',
-                temaBadgeText: '#78350f',
-                temaBadgeHover: '#fcd34d',
+                temaBadge: '#fef3c7',
+                temaBadgeText: '#92400e',
+                temaBadgeHover: '#fde68a',
                 coordinatorBorder: '#d97706',
                 coordinatorBadge: '#d97706',
                 coordinatorBadgeText: '#ffffff'
@@ -354,18 +360,18 @@
         // Cores padrão (fallback)
         const CORES_PADRAO = {
             background: '#f8fafc',
-            border: '#e2e8f0',
+            border: '#94a3b8',
             avatar: '#e2e8f0',
             avatarText: '#475569',
-            tagGerencia: '#e2e8f0',
-            tagGerenciaText: '#475569',
+            tagGerencia: '#94a3b8',
+            tagGerenciaText: '#ffffff',
             tagSub: '#f1f5f9',
             tagSubText: '#475569',
             temaBadge: '#f1f5f9',
             temaBadgeText: '#475569',
             temaBadgeHover: '#e2e8f0',
-            coordinatorBorder: '#94a3b8',
-            coordinatorBadge: '#94a3b8',
+            coordinatorBorder: '#64748b',
+            coordinatorBadge: '#64748b',
             coordinatorBadgeText: '#ffffff'
         };
 
@@ -746,12 +752,12 @@
         }
 
         // ============================================
-        // 6. CRIAR CARD DE PROFISSIONAL
+        // 6. CRIAR CARD DE PROFISSIONAL (CORES EXATAS)
         // ============================================
         function createProfessionalCard(prof, isCoordinatorFlag) {
             const initials = prof.name ? prof.name.split(' ').filter(w => w.length > 0).map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'XX';
             
-            // Buscar as cores baseadas na gerência
+            // Buscar as cores baseadas na gerência (usando as cores exatas do organograma)
             const cores = PALETA_CORES[prof.gerencia] || CORES_PADRAO;
 
             const cargosComDisplay = ['Superintendente', 'Gerente', 'Coordenador', 'Coord.', 'Coordenadora'];
@@ -772,10 +778,11 @@
                 ).join('') : 
                 '<span class="text-xs text-slate-400">Nenhum tema cadastrado</span>';
 
+            // 🔥 CORES EXATAS DO ORGANOGRAMA
             const cardStyle = `
                 background: ${cores.background};
-                border-color: ${cores.border};
-                ${isCoordinatorFlag ? `border-left-color: ${cores.coordinatorBorder}; border-left-width: 6px;` : ''}
+                border: 2px solid ${cores.border};
+                ${isCoordinatorFlag ? `border-left: 6px solid ${cores.coordinatorBorder};` : ''}
             `;
 
             return `
