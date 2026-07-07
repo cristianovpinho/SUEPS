@@ -10,7 +10,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; }
         
-        /* Reset e scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -37,7 +36,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Estilos dos cards com cores fixas (Tailwind não compila classes customizadas) */
+        /* Estilos dos cards com cores fixas usando !important */
         .card-solucoes {
             background: linear-gradient(145deg, #f0fdf4, #dcfce7) !important;
             border-color: #86efac !important;
@@ -140,7 +139,6 @@
             color: white !important;
         }
 
-        /* Card padrão (fallback) */
         .card-slate {
             background: #f8fafc !important;
             border-color: #e2e8f0 !important;
@@ -154,7 +152,6 @@
             color: #475569 !important;
         }
 
-        /* Estilos gerais dos cards */
         .professional-card {
             transition: all 0.3s ease;
             border-width: 2px;
@@ -206,6 +203,12 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             white-space: nowrap;
+        }
+
+        /* CORREÇÃO: Garantir que os estilos sejam aplicados a TODOS os cards */
+        .card-solucoes, .card-negocios, .card-operacoes {
+            /* Garantia extra de que o background será aplicado */
+            background-attachment: fixed !important;
         }
     </style>
 </head>
@@ -342,7 +345,7 @@
 
     <script>
         // ============================================
-        // CONFIGURAÇÃO - ID DA SUA PLANILHA
+        // CONFIGURAÇÃO
         // ============================================
         const CONFIG = {
             SHEET_ID: '1Vwp4olbNoo4cLfeI92OP3Qr20thXiRBQ2iJSGLfcS0g',
@@ -354,21 +357,17 @@
         let professionals = [];
 
         // ============================================
-        // 1. FUNÇÃO PARA EXTRAIR JSON DA RESPOSTA DO GOOGLE
+        // 1. EXTRAIR JSON DA RESPOSTA DO GOOGLE
         // ============================================
         function extractJsonFromGoogleResponse(text) {
             let match = text.match(/google\.visualization\.Query\.setResponse\((\{.*\})\)/s);
             if (match) return match[1];
-            
             match = text.match(/\/\*O_o\*\/(?:.*?)google\.visualization\.Query\.setResponse\((\{.*\})\)/s);
             if (match) return match[1];
-            
             match = text.match(/^\{.*\}$/s);
             if (match) return match[0];
-            
             match = text.match(/\{[\s\S]*"table"[\s\S]*\}/);
             if (match) return match[0];
-            
             return null;
         }
 
@@ -391,27 +390,18 @@
 
             try {
                 console.log('🔄 Buscando dados do Google Sheets...');
-                
                 const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${CONFIG.SHEET_NAME}`;
-                
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
                 const text = await response.text();
-                
                 const jsonStr = extractJsonFromGoogleResponse(text);
-                if (!jsonStr) {
-                    throw new Error('Não foi possível interpretar a resposta do Google Sheets');
-                }
-                
+                if (!jsonStr) throw new Error('Não foi possível interpretar a resposta do Google Sheets');
                 const json = JSON.parse(jsonStr);
-                
                 const rows = json.table.rows;
                 const headers = json.table.cols.map(col => col.label);
 
                 let dataRows = rows;
                 let headerRow = null;
-                
                 if (rows.length > 0 && rows[0].c) {
                     const firstRowValues = rows[0].c.map(cell => cell ? cell.v : '');
                     const isHeaderRow = firstRowValues.some(v => 
@@ -419,7 +409,6 @@
                             v && v.toLowerCase().includes(h)
                         )
                     );
-                    
                     if (isHeaderRow) {
                         headerRow = firstRowValues;
                         dataRows = rows.slice(1);
@@ -430,24 +419,15 @@
 
                 const mappedData = dataRows.map(row => {
                     const values = row.c ? row.c.map(cell => cell ? cell.v : '') : [];
-                    
                     const getValue = (colNames) => {
                         if (!headerRow) return '';
                         for (const name of colNames) {
-                            const idx = headerRow.findIndex(h => 
-                                h && h.toLowerCase().trim() === name.toLowerCase().trim()
-                            );
-                            if (idx !== -1 && values[idx] !== undefined) {
-                                return values[idx] || '';
-                            }
+                            const idx = headerRow.findIndex(h => h && h.toLowerCase().trim() === name.toLowerCase().trim());
+                            if (idx !== -1 && values[idx] !== undefined) return values[idx] || '';
                         }
                         for (const name of colNames) {
-                            const idx = headerRow.findIndex(h => 
-                                h && h.toLowerCase().trim().includes(name.toLowerCase().trim())
-                            );
-                            if (idx !== -1 && values[idx] !== undefined) {
-                                return values[idx] || '';
-                            }
+                            const idx = headerRow.findIndex(h => h && h.toLowerCase().trim().includes(name.toLowerCase().trim()));
+                            if (idx !== -1 && values[idx] !== undefined) return values[idx] || '';
                         }
                         return '';
                     };
@@ -465,23 +445,16 @@
                 });
 
                 const filteredData = mappedData.filter(p => p.name && p.name.trim() !== '');
-                
                 if (filteredData.length === 0) {
                     throw new Error(`Nenhum profissional encontrado. Verifique os cabeçalhos da planilha.`);
                 }
 
                 console.log(`✅ ${filteredData.length} profissionais carregados do Google Sheets`);
-
-                localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify({
-                    data: filteredData,
-                    timestamp: Date.now()
-                }));
-
+                localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify({ data: filteredData, timestamp: Date.now() }));
                 return filteredData;
 
             } catch (error) {
                 console.error('❌ Erro ao carregar do Google Sheets:', error);
-                
                 const cached = localStorage.getItem(CONFIG.CACHE_KEY);
                 if (cached) {
                     try {
@@ -492,7 +465,6 @@
                         }
                     } catch (e) {}
                 }
-                
                 throw error;
             }
         }
@@ -514,7 +486,6 @@
         // ============================================
         function renderHierarchy() {
             const container = document.getElementById('view-hierarchy');
-            
             const gerentes = {
                 'Soluções Educacionais': {
                     nome: 'Luiz Eduardo Leão',
@@ -677,7 +648,6 @@
                 'Operações Educacionais': 'Vanessa Sorda Frason'
             };
 
-            // Agrupar profissionais por gerência e subSec
             const grupos = {};
             professionals.forEach(p => {
                 const gerencia = p.gerencia || 'Outros';
@@ -690,7 +660,6 @@
             let html = '';
 
             for (const [gerencia, subGroups] of Object.entries(grupos)) {
-                // Mapear para a classe CSS correta
                 let cardClass = 'card-slate';
                 let cor = 'slate';
                 if (gerencia === 'Soluções Educacionais') { cardClass = 'card-solucoes'; cor = 'solucoes'; }
@@ -700,12 +669,7 @@
                 const icone = iconesPorGerencia[gerencia] || 'users';
                 const gerente = gerentesPorGerencia[gerencia] || '';
 
-                // Cores para o cabeçalho da seção
-                const coresMap = {
-                    'solucoes': 'emerald',
-                    'negocios': 'blue',
-                    'operacoes': 'amber'
-                };
+                const coresMap = { 'solucoes': 'emerald', 'negocios': 'blue', 'operacoes': 'amber' };
                 const corTag = coresMap[cor] || 'slate';
 
                 html += `
@@ -740,7 +704,6 @@
                         `;
                     }
 
-                    // ORDENAR: Coordenadores primeiro
                     const coordenadores = pessoas.filter(p => isCoordinator(p.role));
                     const equipe = pessoas.filter(p => !isCoordinator(p.role));
 
@@ -774,12 +737,11 @@
         }
 
         // ============================================
-        // 6. CRIAR CARD DE PROFISSIONAL
+        // 6. CRIAR CARD DE PROFISSIONAL - SOLUÇÃO DEFINITIVA
         // ============================================
         function createProfessionalCard(prof, cardClass, isCoordinatorFlag) {
             const initials = prof.name ? prof.name.split(' ').filter(w => w.length > 0).map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'XX';
             
-            // Verificar se é um cargo que deve exibir o cargo abaixo do nome
             const cargosComDisplay = ['Superintendente', 'Gerente', 'Coordenador', 'Coord.', 'Coordenadora'];
             const shouldShowRole = cargosComDisplay.some(cargo => 
                 prof.role && prof.role.toLowerCase().includes(cargo.toLowerCase())
@@ -798,8 +760,20 @@
                 ).join('') : 
                 '<span class="text-xs text-slate-400">Nenhum tema cadastrado</span>';
 
+            // 🔥 CORREÇÃO DEFINITIVA: Adicionar estilo inline diretamente no card
+            // Isso garante que a cor seja aplicada independente do CSS
+            const cardStyles = {
+                'card-solucoes': 'background: linear-gradient(145deg, #f0fdf4, #dcfce7); border-color: #86efac;',
+                'card-negocios': 'background: linear-gradient(145deg, #eff6ff, #dbeafe); border-color: #93c5fd;',
+                'card-operacoes': 'background: linear-gradient(145deg, #fffbeb, #fef3c7); border-color: #fcd34d;',
+                'card-slate': 'background: #f8fafc; border-color: #e2e8f0;'
+            };
+
+            const inlineStyle = cardStyles[cardClass] || cardStyles['card-slate'];
+
             return `
                 <div class="professional-card ${cardClass} ${coordinatorClass} rounded-2xl shadow-sm p-5 flex flex-col justify-between relative" 
+                     style="${inlineStyle}"
                      data-name="${(prof.name || '').toLowerCase()}" 
                      data-role="${(prof.role || '').toLowerCase()}" 
                      data-gerencia="${(prof.gerencia || '').toLowerCase()}" 
@@ -863,7 +837,6 @@
             }
 
             let foundCount = 0;
-
             for (let i = 0; i < cards.length; i++) {
                 const name = cards[i].getAttribute('data-name') || '';
                 const role = cards[i].getAttribute('data-role') || '';
@@ -965,23 +938,17 @@
                 
             } catch (error) {
                 console.error('❌ Erro na inicialização:', error);
-                
                 document.getElementById('loading-state').innerHTML = `
-                    <div class="error-panel" style="background:#fef2f2;border:2px solid #fca5a5;color:#991b1b;padding:20px;border-radius:12px;text-align:center;max-width:600px;margin:0 auto;">
-                        <div class="text-5xl mb-4">⚠️</div>
+                    <div style="background:#fef2f2;border:2px solid #fca5a5;color:#991b1b;padding:20px;border-radius:12px;text-align:center;max-width:600px;margin:0 auto;">
+                        <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
                         <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">Erro ao carregar os dados</h3>
-                        <p style="font-size:14px;margin-bottom:4px;">${error.message || 'Erro desconhecido'}</p>
+                        <p style="font-size:14px;">${error.message || 'Erro desconhecido'}</p>
                         <br>
-                        <div style="text-align:left;background:white;padding:12px 16px;border-radius:8px;margin:8px 0;">
-                            <strong style="color:#1e293b;">🔧 Verifique:</strong>
-                            <br><br>
+                        <div style="text-align:left;background:white;padding:12px 16px;border-radius:8px;margin:8px 0;font-size:13px;">
+                            <strong>🔧 Verifique:</strong><br><br>
                             1️⃣ A planilha está publicada?<br>
-                            <span style="font-size:12px;color:#64748b;">Arquivo → Compartilhar → Publicar na web</span>
-                            <br><br>
-                            2️⃣ A aba se chama <code style="background:#fee2e2;padding:2px 8px;border-radius:4px;font-size:13px;">Dados</code>?
-                            <br><br>
-                            3️⃣ Os cabeçalhos estão corretos?<br>
-                            <span style="font-size:12px;color:#64748b;">name, role, gerencia, email, phone, temas</span>
+                            <span style="font-size:12px;color:#64748b;">Arquivo → Compartilhar → Publicar na web</span><br><br>
+                            2️⃣ A aba se chama <code style="background:#fee2e2;padding:2px 8px;border-radius:4px;">Dados</code>?
                         </div>
                         <br>
                         <button onclick="location.reload()" style="background:#4f46e5;color:white;padding:8px 24px;border-radius:8px;border:none;cursor:pointer;font-weight:600;margin-right:8px;">
@@ -995,7 +962,6 @@
             }
         }
 
-        // Iniciar
         init();
     </script>
 </body>
