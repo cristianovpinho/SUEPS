@@ -36,7 +36,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Badge de coordenador */
+        /* Badge de coordenador - versão única */
         .coordinator-badge {
             font-size: 8px;
             font-weight: 700;
@@ -112,16 +112,6 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
-        .professional-card .tag-gerencia {
-            font-size: 10px;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 9999px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            display: inline-block;
-        }
-
         .professional-card .tag-sub {
             font-size: 10px;
             font-weight: 600;
@@ -151,6 +141,44 @@
         .professional-card.coordinator {
             border-left-width: 6px !important;
         }
+
+        /* Destaque para cards de gerentes no organograma */
+        .gerente-card {
+            border: 3px solid #fbbf24 !important;
+            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.25) !important;
+            position: relative;
+        }
+        .gerente-card::after {
+            content: '👔 Gerente';
+            position: absolute;
+            top: -10px;
+            right: 16px;
+            background: #fbbf24;
+            color: #78350f;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 12px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Proposta de valor abaixo dos cards */
+        .proposta-valor {
+            border-top: 2px solid #e2e8f0;
+            padding-top: 12px;
+            margin-top: 8px;
+            font-size: 11px;
+            line-height: 1.5;
+            color: #475569;
+            text-align: center;
+            font-style: italic;
+        }
+        .proposta-valor strong {
+            color: #1e293b;
+            font-style: normal;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
@@ -161,13 +189,13 @@
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                 <div>
                     <span class="bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">
-                        SENAI - Confederação Nacional da Indústria
+                        SENAI - Departamento Nacional
                     </span>
                     <h1 class="text-3xl sm:text-4xl font-extrabold mt-2 tracking-tight">
                         Superintendência de Educação Profissional e Superior
                     </h1>
                     <p class="text-blue-100/80 mt-2 text-sm sm:text-base max-w-2xl">
-                        Encontre os responsáveis exatos pelas principais entregas do SENAI através do buscador de temas ou navegue pelas divisões operacionais.
+                        Busque por temas, projetos ou processos e encontre facilmente o responsável por cada um.
                     </p>
                 </div>
                 <div class="flex items-center gap-4 bg-white/10 p-4 rounded-xl backdrop-blur-sm self-start md:self-auto">
@@ -200,7 +228,7 @@
                 <input 
                     type="text" 
                     id="search-input"
-                    placeholder="Pesquise por temas ou entregas (Ex: MSEP, PSAI, WorldSkills, Futuro.digital, etc.)" 
+                    placeholder="Pesquise por temas, projetos ou processos (Ex: MSEP, PSAI, WorldSkills, Futuro.digital, etc.)" 
                     class="block w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 text-slate-900 placeholder-slate-400 transition-all text-base sm:text-lg"
                     onkeyup="filterProfessionals()"
                 >
@@ -215,14 +243,16 @@
             
             <div class="mt-4 flex flex-wrap items-center justify-between gap-2">
                 <div class="flex flex-wrap items-center gap-2">
-                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mr-2">Entregas Rápidas:</span>
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mr-2">Temas Rápidos:</span>
+                    <button onclick="setSearch('APRENDIZAGEM')" class="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors px-3 py-1.5 rounded-full font-medium">APRENDIZAGEM</button>
+                    <button onclick="setSearch('CONTRATOS DE BASE NACIONAL')" class="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors px-3 py-1.5 rounded-full font-medium">CONTRATOS DE BASE NACIONAL</button>
+                    <button onclick="setSearch('FUTURO.DIGITAL')" class="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors px-3 py-1.5 rounded-full font-medium">FUTURO.DIGITAL</button>
                     <button onclick="setSearch('MSEP')" class="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors px-3 py-1.5 rounded-full font-medium">MSEP</button>
-                    <button onclick="setSearch('WorldSkills')" class="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors px-3 py-1.5 rounded-full font-medium">WorldSkills</button>
-                    <button onclick="setSearch('Gêmeos Digitais')" class="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors px-3 py-1.5 rounded-full font-medium">Gêmeos Digitais</button>
-                    <button onclick="setSearch('Futuro.digital')" class="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors px-3 py-1.5 rounded-full font-medium">Futuro.digital</button>
-                    <button onclick="setSearch('Contas Nacionais')" class="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors px-3 py-1.5 rounded-full font-medium">Contas Nacionais</button>
-                    <button onclick="setSearch('Lean')" class="text-xs bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors px-3 py-1.5 rounded-full font-medium">Lean / Otimização</button>
                     <button onclick="setSearch('PSAI')" class="text-xs bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors px-3 py-1.5 rounded-full font-medium">PSAI</button>
+                    <button onclick="setSearch('SAEP')" class="text-xs bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors px-3 py-1.5 rounded-full font-medium">SAEP</button>
+                    <button onclick="setSearch('SGE')" class="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors px-3 py-1.5 rounded-full font-medium">SGE</button>
+                    <button onclick="setSearch('UNISENAI')" class="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors px-3 py-1.5 rounded-full font-medium">UNISENAI</button>
+                    <button onclick="setSearch('WORLDSKILLS')" class="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors px-3 py-1.5 rounded-full font-medium">WORLDSKILLS</button>
                 </div>
                 <div class="flex items-center gap-2 text-xs">
                     <span id="data-status" class="data-status text-slate-500 flex items-center gap-2">
@@ -243,7 +273,7 @@
                     <i data-lucide="filter" class="w-5 h-5"></i>
                 </div>
                 <div>
-                    <h3 class="font-semibold text-indigo-950">Filtro de Entregas Ativo</h3>
+                    <h3 class="font-semibold text-indigo-950">Filtro de Temas Ativo</h3>
                     <p class="text-sm text-indigo-700" id="results-count">Mostrando colaboradores associados ao tema.</p>
                 </div>
             </div>
@@ -274,7 +304,7 @@
     <footer class="bg-slate-950 text-slate-400 py-8 border-t border-slate-800 mt-auto">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:flex sm:justify-between sm:items-center">
             <p class="text-sm">
-                &copy; 2026 Superintendência de Educação Profissional e Superior - Matriz SENAI CNI.
+                &copy; 2026 Superintendência de Educação Profissional e Superior - Matriz SENAI DN.
             </p>
             <p class="text-xs text-slate-500 mt-2 sm:mt-0 flex items-center gap-2">
                 <span>Dados carregados do Google Sheets</span>
@@ -298,27 +328,21 @@
         let professionals = [];
 
         // ============================================
-        // 🎨 CORES EXATAS DO ORGANOGRAMA
+        // 🎨 CORES AJUSTADAS PELO USUÁRIO
         // ============================================
         const PALETA_CORES = {
             'Soluções Educacionais': {
-                // Fundo do card - igual ao fundo do card da gerência no organograma
                 background: '#F3FCF7',
-                // Borda - igual à cor do badge "Gerência de Soluções Educacionais"
                 border: '#D2F4E6',
-                // Avatar - tom mais forte da cor
                 avatar: '#34d399',
                 avatarText: '#064e3b',
-                // Tags
                 tagGerencia: '#10b981',
                 tagGerenciaText: '#ffffff',
                 tagSub: '#d1fae5',
                 tagSubText: '#065f46',
-                // Temas
                 temaBadge: '#d1fae5',
                 temaBadgeText: '#065f46',
                 temaBadgeHover: '#a7f3d0',
-                // Coordenador
                 coordinatorBorder: '#059669',
                 coordinatorBadge: '#059669',
                 coordinatorBadgeText: '#ffffff'
@@ -373,6 +397,15 @@
             coordinatorBorder: '#64748b',
             coordinatorBadge: '#64748b',
             coordinatorBadgeText: '#ffffff'
+        };
+
+        // ============================================
+        // PROPOSTAS DE VALOR
+        // ============================================
+        const PROPOSTAS_VALOR = {
+            'Soluções Educacionais': '"Impulsionar o futuro do aprendizado por meio de soluções educacionais disruptivas e infraestrutura física e digital de ponta, unindo tecnologias e metodologias emergentes para potencializar o conhecimento, e expandir o desenvolvimento de competências de forma personalizada, em escala nacional."',
+            'Negócios Educacionais': '"Transformar a área educacional do SENAI em um vetor estratégico de sustentabilidade financeira. Com postura consultiva e orientada a resultados, a gerência gera negócios, leads e soluções em larga escala para empresas, trabalhadores e parceiros institucionais."',
+            'Operações Educacionais': '"Assegurar a excelência acadêmica e a eficiência operacional por meio da padronização estratégica dos processos educacionais, sustentada pela cultura de melhoria contínua baseada em dados, garantindo o desenvolvimento integral do aluno, a formação da equipe pedagógica e o fortalecimento da Metodologia SENAI de Educação Profissional."'
         };
 
         // ============================================
@@ -459,6 +492,8 @@
                         role: getValue(['role', 'cargo', 'funcao']) || '',
                         gerencia: getValue(['gerencia', 'gerência', 'area']) || '',
                         subSec: getValue(['subsec', 'subSec', 'coordenacao', 'coordenação']) || '',
+                        email: getValue(['email', 'e-mail', 'contato']) || '',
+                        phone: getValue(['phone', 'telefone', 'fone']) || '',
                         temas: temas
                     };
                 });
@@ -511,7 +546,6 @@
                     nome: 'Luiz Eduardo Leão',
                     cor: 'emerald',
                     icone: 'book-open',
-                    proposta: '"Impulsionar o futuro do aprendizado por meio de soluções educacionais disruptivas e infraestrutura física e digital de ponta."',
                     coords: [
                         { nome: 'Anderson Scarlassara', cargo: 'Coord. Tecnologias', cor: 'emerald' },
                         { nome: 'Natalia Schultz', cargo: 'Coord. Qualidade', cor: 'indigo' }
@@ -521,14 +555,12 @@
                     nome: 'Mateus Simoes de Freitas',
                     cor: 'blue',
                     icone: 'briefcase',
-                    proposta: '"Transformar a área educacional do SENAI em um vetor estratégico de sustentabilidade financeira, gerando negócios e soluções em larga escala."',
                     coords: []
                 },
                 'Operações Educacionais': {
                     nome: 'Vanessa Sorda Frason',
                     cor: 'amber',
                     icone: 'cpu',
-                    proposta: '"Assegurar a excelência acadêmica e a eficiência operacional por meio da padronização estratégica dos processos educacionais."',
                     coords: []
                 }
             };
@@ -579,6 +611,9 @@
                     </div>
                 `;
 
+                // Proposta de valor para este card
+                const proposta = PROPOSTAS_VALOR[gerencia] || '';
+
                 html += `
                     <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 flex flex-col relative hover:shadow-xl transition-all fade-in">
                         <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-${info.cor}-500 text-white text-[10px] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap">
@@ -590,17 +625,15 @@
                                 <i data-lucide="${info.icone}" class="w-7 h-7"></i>
                             </div>
                             
-                            <div class="w-full bg-${info.cor}-50/70 rounded-xl p-3 text-center border border-${info.cor}-200/50 mb-2">
+                            <div class="w-full bg-${info.cor}-50/70 rounded-xl p-3 text-center border border-${info.cor}-200/50 mb-2 gerente-card">
                                 <span class="text-[9px] font-bold text-${info.cor}-600 uppercase tracking-wider">Gerente</span>
                                 <div class="font-bold text-slate-900 text-sm">${info.nome}</div>
                             </div>
 
                             ${coordsHtml}
 
-                            <div class="mt-3 w-full bg-gradient-to-r from-${info.cor}-50 to-${info.cor}-100/30 p-3 rounded-xl border border-${info.cor}-200/40">
-                                <span class="text-[8px] font-bold text-${info.cor}-700 uppercase tracking-wider block text-center">🎯 Proposta de Valor</span>
-                                <p class="text-[10px] text-slate-700 leading-relaxed text-center italic mt-0.5">${info.proposta}</p>
-                            </div>
+                            <!-- Proposta de Valor abaixo do card -->
+                            ${proposta ? `<div class="proposta-valor"><strong>🎯 Proposta de Valor</strong><br>${proposta}</div>` : ''}
                         </div>
                         
                         <button onclick="filterByGerencia('${gerencia}')" class="mt-3 text-xs font-semibold text-${info.cor}-600 hover:text-${info.cor}-700 flex items-center justify-center gap-1">
@@ -752,12 +785,12 @@
         }
 
         // ============================================
-        // 6. CRIAR CARD DE PROFISSIONAL (CORES EXATAS)
+        // 6. CRIAR CARD DE PROFISSIONAL
         // ============================================
         function createProfessionalCard(prof, isCoordinatorFlag) {
             const initials = prof.name ? prof.name.split(' ').filter(w => w.length > 0).map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'XX';
             
-            // Buscar as cores baseadas na gerência (usando as cores exatas do organograma)
+            // Buscar as cores baseadas na gerência
             const cores = PALETA_CORES[prof.gerencia] || CORES_PADRAO;
 
             const cargosComDisplay = ['Superintendente', 'Gerente', 'Coordenador', 'Coord.', 'Coordenadora'];
@@ -765,6 +798,7 @@
                 prof.role && prof.role.toLowerCase().includes(cargo.toLowerCase())
             );
 
+            // Badge de coordenador - APENAS UM
             const coordinatorBadge = isCoordinatorFlag ? `
                 <span class="coordinator-badge" style="background:${cores.coordinatorBadge}; color:${cores.coordinatorBadgeText};">⭐ Coordenador</span>
             ` : '';
@@ -778,11 +812,18 @@
                 ).join('') : 
                 '<span class="text-xs text-slate-400">Nenhum tema cadastrado</span>';
 
-            // 🔥 CORES EXATAS DO ORGANOGRAMA
             const cardStyle = `
                 background: ${cores.background};
                 border: 2px solid ${cores.border};
                 ${isCoordinatorFlag ? `border-left: 6px solid ${cores.coordinatorBorder};` : ''}
+            `;
+
+            // Contatos (e-mail e telefone) - agora COM contatos
+            const contatosHtml = `
+                <div class="border-t border-slate-100 pt-2 mt-2 text-xs text-slate-500 space-y-0.5">
+                    ${prof.email ? `<div class="flex items-center gap-1.5"><i data-lucide="mail" class="w-3.5 h-3.5 text-slate-400"></i> ${prof.email}</div>` : ''}
+                    ${prof.phone ? `<div class="flex items-center gap-1.5"><i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400"></i> ${prof.phone}</div>` : ''}
+                </div>
             `;
 
             return `
@@ -794,7 +835,7 @@
                      data-temas="${(prof.temas || []).join(' | ').toLowerCase()}">
                     ${starIcon}
                     <div>
-                        <div class="flex items-start gap-3 mb-4">
+                        <div class="flex items-start gap-3 mb-3">
                             <div class="flex items-center gap-3">
                                 <div class="avatar" style="background:${cores.avatar}; color:${cores.avatarText};">
                                     ${initials}
@@ -809,14 +850,15 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <span class="tag-gerencia" style="background:${cores.tagGerencia}; color:${cores.tagGerenciaText};">${prof.gerencia || 'Outros'}</span>
-                            ${prof.subSec ? `<span class="tag-sub" style="background:${cores.tagSub}; color:${cores.tagSubText};">${prof.subSec}</span>` : ''}
-                        </div>
+                        <!-- SEM badge da gerência - removido -->
+                        ${prof.subSec ? `<span class="tag-sub" style="background:${cores.tagSub}; color:${cores.tagSubText};">${prof.subSec}</span>` : ''}
+
+                        <!-- Contatos -->
+                        ${contatosHtml}
                     </div>
 
-                    <div>
-                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">TEMAS</span>
+                    <div class="mt-3">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">TEMAS</span>
                         <div class="flex flex-wrap max-h-32 overflow-y-auto pr-1">
                             ${temasBadges}
                         </div>
@@ -865,7 +907,7 @@
                 }
             }
 
-            resultsCount.textContent = `Encontramos ${foundCount} profissional(is) associados ao termo "${input.value}".`;
+            resultsCount.textContent = `Encontramos ${foundCount} profissional(is) associados ao tema "${input.value}".`;
             adjustSectionsVisibility();
         }
 
