@@ -203,7 +203,6 @@
         // 2. CARREGAR DADOS DO GOOGLE SHEETS
         // ============================================
         async function loadFromGoogleSheets() {
-            // Verificar cache primeiro
             const cached = localStorage.getItem(CONFIG.CACHE_KEY);
             if (cached) {
                 try {
@@ -237,7 +236,6 @@
                 const rows = json.table.rows;
                 const headers = json.table.cols.map(col => col.label);
 
-                // Usar a primeira linha como cabeçalho
                 let dataRows = rows;
                 let headerRow = null;
                 
@@ -257,7 +255,6 @@
                     }
                 }
 
-                // Mapear os dados
                 const mappedData = dataRows.map(row => {
                     const values = row.c ? row.c.map(cell => cell ? cell.v : '') : [];
                     
@@ -467,7 +464,7 @@
         }
 
         // ============================================
-        // 4. RENDERIZAR PESSOAS, PROCESSOS E PROJETOS
+        // 4. RENDERIZAR PESSOAS, PROCESSOS E PROJETOS (COM CORES)
         // ============================================
         function renderDirectory() {
             const container = document.getElementById('view-directory');
@@ -483,6 +480,26 @@
                 return;
             }
 
+            // Mapeamento de cores por gerência
+            const coresPorGerencia = {
+                'Soluções Educacionais': 'emerald',
+                'Negócios Educacionais': 'blue',
+                'Operações Educacionais': 'amber'
+            };
+
+            const iconesPorGerencia = {
+                'Soluções Educacionais': 'book-open',
+                'Negócios Educacionais': 'briefcase',
+                'Operações Educacionais': 'cpu'
+            };
+
+            const gerentesPorGerencia = {
+                'Soluções Educacionais': 'Luiz Eduardo Leão',
+                'Negócios Educacionais': 'Mateus Simoes de Freitas',
+                'Operações Educacionais': 'Vanessa Sorda Frason'
+            };
+
+            // Agrupar profissionais por gerência e subSec
             const grupos = {};
             professionals.forEach(p => {
                 const gerencia = p.gerencia || 'Outros';
@@ -492,33 +509,12 @@
                 grupos[gerencia][subKey].push(p);
             });
 
-            const cores = {
-                'Soluções Educacionais': 'emerald',
-                'Negócios Educacionais': 'blue',
-                'Operações Educacionais': 'amber'
-            };
-
-            const icones = {
-                'Soluções Educacionais': 'book-open',
-                'Negócios Educacionais': 'briefcase',
-                'Operações Educacionais': 'cpu'
-            };
-
-            const gerentes = {
-                'Soluções Educacionais': 'Luiz Eduardo Leão',
-                'Negócios Educacionais': 'Mateus Simoes de Freitas',
-                'Operações Educacionais': 'Vanessa Sorda Frason'
-            };
-
-            // Lista de cargos que devem exibir o cargo abaixo do nome
-            const cargosComDisplay = ['Superintendente', 'Gerente', 'Coordenador', 'Coord.', 'Coordenadora'];
-
             let html = '';
 
             for (const [gerencia, subGroups] of Object.entries(grupos)) {
-                const cor = cores[gerencia] || 'slate';
-                const icone = icones[gerencia] || 'users';
-                const gerente = gerentes[gerencia] || '';
+                const cor = coresPorGerencia[gerencia] || 'slate';
+                const icone = iconesPorGerencia[gerencia] || 'users';
+                const gerente = gerentesPorGerencia[gerencia] || '';
 
                 html += `
                     <div class="space-y-6" id="sec-${gerencia.replace(/\s/g, '-')}">
@@ -555,11 +551,7 @@
                     html += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="container-${gerencia.replace(/\s/g, '')}-${subSec.replace(/\s/g, '')}">`;
                     
                     pessoas.forEach(prof => {
-                        // Verificar se o cargo deve ser exibido
-                        const shouldShowRole = cargosComDisplay.some(c => 
-                            prof.role && prof.role.toLowerCase().includes(c.toLowerCase())
-                        );
-                        html += createProfessionalCard(prof, cor, shouldShowRole);
+                        html += createProfessionalCard(prof, cor);
                     });
                     
                     html += `</div>`;
@@ -572,25 +564,59 @@
         }
 
         // ============================================
-        // 5. CRIAR CARD DE PROFISSIONAL (SEM CONTATOS, COM CORES)
+        // 5. CRIAR CARD DE PROFISSIONAL (COM CORES)
         // ============================================
-        function createProfessionalCard(prof, cor, showRole) {
+        function createProfessionalCard(prof, cor) {
             // Gerar iniciais a partir do nome
             const initials = prof.name ? prof.name.split(' ').filter(w => w.length > 0).map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'XX';
             
-            const avatarBg = {
-                'emerald': 'bg-emerald-100 text-emerald-800',
-                'blue': 'bg-blue-100 text-blue-800',
-                'amber': 'bg-amber-100 text-amber-800'
-            }[cor] || 'bg-slate-100 text-slate-700';
+            // Cores de fundo e texto baseadas na cor da gerência
+            const cores = {
+                'emerald': {
+                    bg: 'bg-emerald-50',
+                    border: 'border-emerald-200',
+                    text: 'text-emerald-800',
+                    avatar: 'bg-emerald-100 text-emerald-800',
+                    badge: 'bg-emerald-100 text-emerald-700',
+                    hover: 'hover:border-emerald-300',
+                    tag: 'bg-emerald-50 text-emerald-700'
+                },
+                'blue': {
+                    bg: 'bg-blue-50',
+                    border: 'border-blue-200',
+                    text: 'text-blue-800',
+                    avatar: 'bg-blue-100 text-blue-800',
+                    badge: 'bg-blue-100 text-blue-700',
+                    hover: 'hover:border-blue-300',
+                    tag: 'bg-blue-50 text-blue-700'
+                },
+                'amber': {
+                    bg: 'bg-amber-50',
+                    border: 'border-amber-200',
+                    text: 'text-amber-800',
+                    avatar: 'bg-amber-100 text-amber-800',
+                    badge: 'bg-amber-100 text-amber-700',
+                    hover: 'hover:border-amber-300',
+                    tag: 'bg-amber-50 text-amber-700'
+                },
+                'slate': {
+                    bg: 'bg-slate-50',
+                    border: 'border-slate-200',
+                    text: 'text-slate-800',
+                    avatar: 'bg-slate-100 text-slate-700',
+                    badge: 'bg-slate-100 text-slate-700',
+                    hover: 'hover:border-slate-300',
+                    tag: 'bg-slate-50 text-slate-700'
+                }
+            };
 
-            const temasBadges = (prof.temas && prof.temas.length > 0) ? 
-                prof.temas.map(tema => 
-                    `<span class="tema-badge inline-block bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-2.5 py-1 rounded-lg mr-1.5 mb-1.5 transition-colors cursor-pointer" onclick="setSearch('${tema.replace(/'/g, "\\'")}')">${tema}</span>`
-                ).join('') : 
-                '<span class="text-xs text-slate-400">Nenhum tema cadastrado</span>';
+            const c = cores[cor] || cores.slate;
 
-            // Determinar se é um cargo especial
+            // Lista de cargos que devem exibir o cargo abaixo do nome
+            const cargosComDisplay = ['Superintendente', 'Gerente', 'Coordenador', 'Coord.', 'Coordenadora'];
+            const shouldShowRole = cargosComDisplay.some(cargo => 
+                prof.role && prof.role.toLowerCase().includes(cargo.toLowerCase())
+            );
             const isSpecial = prof.role && (
                 prof.role.toLowerCase().includes('superintendente') ||
                 prof.role.toLowerCase().includes('gerente') ||
@@ -598,8 +624,14 @@
                 prof.role.toLowerCase().includes('coord.')
             );
 
+            const temasBadges = (prof.temas && prof.temas.length > 0) ? 
+                prof.temas.map(tema => 
+                    `<span class="tema-badge inline-block bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-2.5 py-1 rounded-lg mr-1.5 mb-1.5 transition-colors cursor-pointer" onclick="setSearch('${tema.replace(/'/g, "\\'")}')">${tema}</span>`
+                ).join('') : 
+                '<span class="text-xs text-slate-400">Nenhum tema cadastrado</span>';
+
             return `
-                <div class="professional-card bg-white rounded-2xl shadow-md border border-slate-200 p-5 hover:shadow-xl transition-all duration-300 flex flex-col justify-between" 
+                <div class="professional-card bg-white rounded-2xl shadow-md border ${c.border} p-5 hover:shadow-xl transition-all duration-300 flex flex-col justify-between ${c.hover}" 
                      data-name="${(prof.name || '').toLowerCase()}" 
                      data-role="${(prof.role || '').toLowerCase()}" 
                      data-gerencia="${(prof.gerencia || '').toLowerCase()}" 
@@ -607,19 +639,19 @@
                     <div>
                         <div class="flex items-start gap-3 mb-4">
                             <div class="flex items-center gap-3">
-                                <div class="w-12 h-12 ${avatarBg} rounded-xl flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+                                <div class="w-12 h-12 ${c.avatar} rounded-xl flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
                                     ${initials}
                                 </div>
                                 <div>
                                     <h4 class="font-bold text-slate-900 text-base leading-snug">${prof.name || 'Nome não informado'}</h4>
-                                    ${showRole || isSpecial ? `<p class="text-xs text-slate-500 font-medium">${prof.role || ''}</p>` : ''}
+                                    ${shouldShowRole ? `<p class="text-xs text-slate-500 font-medium">${prof.role || ''}</p>` : ''}
                                 </div>
                             </div>
-                            ${isSpecial ? `<span class="bg-${cor}-100 text-${cor}-700 text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">Líder</span>` : ''}
+                            ${isSpecial ? `<span class="${c.badge} text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">Líder</span>` : ''}
                         </div>
 
                         <div class="mb-3">
-                            <span class="bg-${cor}-50 text-${cor}-700 text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">${prof.gerencia || 'Outros'}</span>
+                            <span class="${c.tag} text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">${prof.gerencia || 'Outros'}</span>
                             ${prof.subSec ? `<span class="bg-slate-100 text-slate-600 text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ml-1">${prof.subSec}</span>` : ''}
                         </div>
                     </div>
