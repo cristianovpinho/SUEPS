@@ -541,9 +541,11 @@
                    roleLower.includes('coordenadora');
         }
 
+        // 🔥 FUNÇÃO MELHORADA para identificar gerentes
         function isManager(role) {
             if (!role) return false;
             const roleLower = role.toLowerCase();
+            // Qualquer cargo que contenha "gerente" ou "superintendente"
             return roleLower.includes('gerente') || 
                    roleLower.includes('superintendente');
         }
@@ -609,9 +611,8 @@
                             </div>
                         `).join('')}
                     </div>
-                ` : ''; // REMOVIDO o box "Equipe" para Negócios e Operações
+                ` : '';
 
-                // Proposta de valor para este card
                 const proposta = PROPOSTAS_VALOR[gerencia] || '';
 
                 html += `
@@ -625,14 +626,12 @@
                                 <i data-lucide="${info.icone}" class="w-7 h-7"></i>
                             </div>
                             
-                            <!-- Card do gerente com destaque (sem texto "Gerente" duplicado) -->
                             <div class="w-full bg-${info.cor}-50/70 rounded-xl p-3 text-center border border-${info.cor}-200/50 mb-2 gerente-card">
                                 <div class="font-bold text-slate-900 text-sm">${info.nome}</div>
                             </div>
 
                             ${coordsHtml}
 
-                            <!-- Proposta de Valor abaixo do card -->
                             ${proposta ? `<div class="proposta-valor"><strong>🎯 Proposta de Valor</strong><br>${proposta}</div>` : ''}
                         </div>
                         
@@ -728,14 +727,14 @@
                         `;
                     }
 
-                    // Separar por tipo: Gerentes (com destaque), Coordenadores, Equipe
+                    // 🔥 ORDENAÇÃO CORRETA: Gerentes primeiro (com destaque), depois coordenadores, depois equipe
                     const gerentesList = pessoas.filter(p => isManager(p.role) && !isCoordinator(p.role));
                     const coordenadores = pessoas.filter(p => isCoordinator(p.role) && !isManager(p.role));
                     const equipe = pessoas.filter(p => !isCoordinator(p.role) && !isManager(p.role));
 
                     html += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="container-${gerencia.replace(/\s/g, '')}-${subSec.replace(/\s/g, '')}">`;
                     
-                    // GERENTES PRIMEIRO (com destaque)
+                    // 👔 GERENTES PRIMEIRO (com destaque dourado)
                     if (gerentesList.length > 0) {
                         html += `<div class="col-span-full"><div class="leader-divider"><span>👔 Gerência</span></div></div>`;
                         gerentesList.forEach(prof => {
@@ -743,7 +742,7 @@
                         });
                     }
 
-                    // Depois coordenadores
+                    // ⭐ COORDENADORES
                     if (coordenadores.length > 0) {
                         html += `<div class="col-span-full"><div class="leader-divider"><span>👥 Lideranças</span></div></div>`;
                         coordenadores.forEach(prof => {
@@ -751,7 +750,7 @@
                         });
                     }
 
-                    // Por fim a equipe
+                    // 👤 EQUIPE
                     if (equipe.length > 0) {
                         if (gerentesList.length > 0 || coordenadores.length > 0) {
                             html += `<div class="col-span-full"><div class="leader-divider"><span>👤 Equipe</span></div></div>`;
@@ -778,7 +777,6 @@
         function createProfessionalCard(prof, isCoordinatorFlag, isManagerFlag) {
             const initials = prof.name ? prof.name.split(' ').filter(w => w.length > 0).map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'XX';
             
-            // Buscar as cores baseadas na gerência
             const cores = PALETA_CORES[prof.gerencia] || CORES_PADRAO;
 
             const cargosComDisplay = ['Superintendente', 'Gerente', 'Coordenador', 'Coord.', 'Coordenadora'];
@@ -786,7 +784,6 @@
                 prof.role && prof.role.toLowerCase().includes(cargo.toLowerCase())
             );
 
-            // Badge de coordenador - APENAS UM
             const coordinatorBadge = isCoordinatorFlag ? `
                 <span class="coordinator-badge" style="background:${cores.coordinatorBadge}; color:${cores.coordinatorBadgeText};">⭐ Coordenador</span>
             ` : '';
@@ -794,8 +791,9 @@
             const coordinatorClass = isCoordinatorFlag ? 'coordinator' : '';
             const starIcon = isCoordinatorFlag ? '<span class="coordinator-star">⭐</span>' : '';
 
-            // Destaque de gerente (borda dourada) - NÃO aplicado para Superintendente
-            const managerClass = (isManagerFlag && !prof.role.toLowerCase().includes('superintendente')) ? 'gerente-card' : '';
+            // 🔥 Destaque de gerente (borda dourada) - NÃO aplicado para Superintendente
+            const isSuperintendente = prof.role && prof.role.toLowerCase().includes('superintendente');
+            const managerClass = (isManagerFlag && !isSuperintendente) ? 'gerente-card' : '';
 
             const temasBadges = (prof.temas && prof.temas.length > 0) ? 
                 prof.temas.map(tema => 
@@ -809,7 +807,6 @@
                 ${isCoordinatorFlag ? `border-left: 6px solid ${cores.coordinatorBorder};` : ''}
             `;
 
-            // Contatos (e-mail e telefone)
             const contatosHtml = `
                 <div class="border-t border-slate-100 pt-2 mt-2 text-xs text-slate-500 space-y-0.5">
                     ${prof.email ? `<div class="flex items-center gap-1.5"><i data-lucide="mail" class="w-3.5 h-3.5 text-slate-400"></i> ${prof.email}</div>` : ''}
@@ -841,10 +838,8 @@
                             </div>
                         </div>
 
-                        <!-- SEM badge da gerência - removido -->
                         ${prof.subSec ? `<span class="tag-sub" style="background:${cores.tagSub}; color:${cores.tagSubText};">${prof.subSec}</span>` : ''}
 
-                        <!-- Contatos -->
                         ${contatosHtml}
                     </div>
 
