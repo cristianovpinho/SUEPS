@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Acompanhamento de Aprendizes por UF</title>
+  <style>
+    :root {
+      --azul: #034ea2;
+      --azul-escuro: #02366f;
+      --azul-claro: #edf5ff;
+      --laranja: #f16433;
+      --verde: #16794a;
+      --fundo: #f3f6fa;
+      --card: #ffffff;
+      --texto: #162033;
+      --muted: #667085;
+      --linha: #dce4ee;
+      --alerta-bg: #fff8e8;
+      --alerta-borda: #f3c969;
+      --sombra: 0 16px 42px rgba(3, 78, 162, 0.09);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      color: var(--texto);
+      background:
+        radial-gradient(circle at 100% 0, rgba(3, 78, 162, .09), transparent 28%),
+        var(--fundo);
+    }
+
+    button, input, select { font: inherit; }
+
+    .pagina {
+      width: min(1500px, calc(100% - 28px));
+      margin: 24px auto 36px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 30px;
+      color: #fff;
+      border-radius: 24px;
+      background: linear-gradient(135deg, var(--azul-escuro), var(--azul));
+      box-shadow: var(--sombra);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 340px;
+      height: 340px;
+      border-radius: 50%;
+      right: -140px;
+      top: -170px;
+      background: rgba(255,255,255,.09);
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      padding: 7px 11px;
+      margin-bottom: 14px;
+      border: 1px solid rgba(255,255,255,.27);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 950px;
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1.08;
+    }
+
+    .hero p {
+      max-width: 930px;
+      margin: 0;
+      color: rgba(255,255,255,.84);
+      line-height: 1.55;
+    }
+
+    .alerta {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-top: 18px;
+      padding: 15px 17px;
+      border: 1px solid var(--alerta-borda);
+      border-radius: 16px;
+      color: #744b00;
+      background: var(--alerta-bg);
+      line-height: 1.5;
+      font-size: 13px;
+    }
+
+    .alerta strong { color: #5f3d00; }
+
+    .painel {
+      margin-top: 20px;
+      padding: 22px;
+      border: 1px solid var(--linha);
+      border-radius: 22px;
+      background: var(--card);
+      box-shadow: var(--sombra);
+    }
+
+    .painel-topo {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .painel h2 {
+      margin: 0 0 5px;
+      font-size: 20px;
+    }
+
+    .subtitulo {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .kpi {
+      min-height: 132px;
+      padding: 18px;
+      border: 1px solid var(--linha);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #fff, #fbfcfe);
+    }
+
+    .kpi.destaque {
+      border-color: rgba(3,78,162,.30);
+      background: linear-gradient(180deg, #f8fbff, #edf5ff);
+    }
+
+    .kpi.verde {
+      border-color: rgba(22,121,74,.25);
+      background: linear-gradient(180deg, #f8fffb, #eefaf4);
+    }
+
+    .kpi-label {
+      min-height: 34px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .045em;
+      line-height: 1.35;
+      text-transform: uppercase;
+    }
+
+    .kpi-valor {
+      margin-top: 9px;
+      color: var(--azul-escuro);
+      font-size: clamp(25px, 3vw, 36px);
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .kpi.verde .kpi-valor { color: var(--verde); }
+
+    .kpi-ajuda {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .utilitarios {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(160px, 1fr)) auto;
+      gap: 12px;
+      align-items: end;
+      margin-top: 18px;
+      padding: 16px;
+      border: 1px solid var(--linha);
+      border-radius: 16px;
+      background: #f8fafc;
+    }
+
+    .campo label {
+      display: block;
+      margin-bottom: 7px;
+      color: #344054;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .input-wrap {
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      border: 1px solid #cbd5e1;
+      border-radius: 11px;
+      background: #fff;
+      transition: .2s;
+    }
+
+    .input-wrap:focus-within {
+      border-color: var(--azul);
+      box-shadow: 0 0 0 4px rgba(3,78,162,.09);
+    }
+
+    .input-wrap input {
+      min-width: 0;
+      width: 100%;
+      padding: 10px 11px;
+      border: 0;
+      outline: none;
+      color: var(--texto);
+      background: transparent;
+    }
+
+    .sufixo {
+      padding: 0 10px;
+      border-left: 1px solid var(--linha);
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .acoes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .botao {
+      cursor: pointer;
+      padding: 10px 14px;
+      border: 1px solid var(--linha);
+      border-radius: 11px;
+      color: #344054;
+      background: #fff;
+      font-weight: 800;
+      font-size: 12px;
+      transition: .2s;
+      white-space: nowrap;
+    }
+
+    .botao:hover { transform: translateY(-1px); }
+
+    .botao.primario {
+      color: #fff;
+      border-color: var(--azul);
+      background: var(--azul);
+    }
+
+    .tabela-controles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .busca, .ordenacao {
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 11px;
+      outline: none;
+      background: #fff;
+      color: var(--texto);
+    }
+
+    .busca { width: 210px; }
+
+    .tabela-wrap {
+      overflow: auto;
+      max-height: 720px;
+      border: 1px solid var(--linha);
+      border-radius: 17px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 1380px;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+    }
+
+    th {
+      padding: 13px 10px;
+      border-bottom: 1px solid var(--linha);
+      color: #475467;
+      background: #f7f9fc;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .035em;
+      text-align: right;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    th:first-child, td:first-child { text-align: left; }
+
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #edf0f4;
+      color: #344054;
+      font-size: 12px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    tbody tr:hover td { background: #f8fbff; }
+
+    tfoot td {
+      position: sticky;
+      bottom: 0;
+      z-index: 2;
+      border-top: 2px solid var(--azul);
+      border-bottom: 0;
+      color: var(--azul-escuro);
+      background: #edf5ff;
+      font-weight: 900;
+    }
+
+    .uf {
+      display: inline-flex;
+      min-width: 38px;
+      justify-content: center;
+      padding: 6px 8px;
+      border-radius: 8px;
+      color: var(--azul-escuro);
+      background: var(--azul-claro);
+      font-weight: 900;
+    }
+
+    .celula-input {
+      width: 95px;
+      padding: 8px 8px;
+      border: 1px solid #d5dde7;
+      border-radius: 9px;
+      color: #344054;
+      text-align: right;
+      background: #fff;
+      outline: none;
+    }
+
+    .celula-input.aprendizes { width: 110px; }
+
+    .celula-input:focus {
+      border-color: var(--azul);
+      box-shadow: 0 0 0 3px rgba(3,78,162,.08);
+    }
+
+    .ranking {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 18px;
+      margin-top: 20px;
+    }
+
+    .ranking-lista {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .ranking-item {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .ranking-posicao {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .ranking-barra {
+      position: relative;
+      height: 31px;
+      overflow: hidden;
+      border-radius: 9px;
+      background: #eef2f6;
+    }
+
+    .ranking-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, rgba(3,78,162,.22), rgba(3,78,162,.58));
+    }
+
+    .ranking-nome {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      padding-left: 10px;
+      color: var(--azul-escuro);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .ranking-valor {
+      min-width: 90px;
+      color: #344054;
+      font-size: 13px;
+      font-weight: 900;
+      text-align: right;
+    }
+
+    .premissa {
+      padding: 18px;
+      border-radius: 18px;
+      border: 1px solid #fdba74;
+      color: #7c3d12;
+      background: #fff7ed;
+      line-height: 1.55;
+      font-size: 13px;
+    }
+
+    .premissa strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #9a3412;
+    }
+
+    .rodape {
+      margin-top: 15px;
+      color: var(--muted);
+      font-size: 11px;
+      text-align: center;
+    }
+
+    @media (max-width: 1100px) {
+      .utilitarios { grid-template-columns: repeat(2, minmax(170px, 1fr)); }
+      .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .ranking { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .pagina { width: min(100% - 16px, 1500px); margin-top: 8px; }
+      .hero, .painel { padding: 18px; border-radius: 18px; }
+      .kpis, .utilitarios { grid-template-columns: 1fr; }
+      .painel-topo { flex-direction: column; }
+      .busca, .ordenacao { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="pagina">
+    <section class="hero">
+      <div class="hero-tag">Simulador por Unidade da Federação</div>
+      <h1>Acompanhamento de aprendizes e redução de turmas equivalentes</h1>
+      <p>
+        Cada estado possui seus próprios parâmetros de acompanhamento e de turma.
+        O consolidado Brasil soma os resultados calculados individualmente em cada UF.
+      </p>
+    </section>
+
+    <div class="alerta">
+      <div>
+        <strong>Atenção ao consolidado da base:</strong>
+        os valores estaduais informados somam <strong>175.011 aprendizes</strong>, uma diferença de
+        <strong>66.269</strong> em relação à referência nacional de 241.280. O simulador utiliza a soma
+        efetiva das 27 UFs.
+      </div>
+    </div>
+
+    <section class="painel">
+      <div class="painel-topo">
+        <div>
+          <h2>Consolidado Brasil</h2>
+          <p class="subtitulo">Soma dos resultados calculados com os parâmetros próprios de cada estado.</p>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <article class="kpi">
+          <div class="kpi-label">Aprendizes na base estadual</div>
+          <div class="kpi-valor" id="kpiAprendizes">175.011</div>
+          <div class="kpi-ajuda">Soma automática das 27 UFs.</div>
+        </article>
+
+        <article class="kpi">
+          <div class="kpi-label">Horas anuais de acompanhamento</div>
+          <div class="kpi-valor" id="kpiHoras">350.022</div>
+          <div class="kpi-ajuda">Soma das horas geradas em cada estado.</div>
+        </article>
+
+        <article class="kpi destaque">
+          <div class="kpi-label">Turmas equivalentes reduzidas</div>
+          <div class="kpi-valor" id="kpiTurmasEq">72,92</div>
+          <div class="kpi-ajuda">Soma das equivalências calculadas por UF.</div>
+        </article>
+
+        <article class="kpi verde">
+          <div class="kpi-label">Turmas completas reduzidas</div>
+          <div class="kpi-valor" id="kpiTurmasCompletas">63</div>
+          <div class="kpi-ajuda">Soma das turmas inteiras de cada estado.</div>
+        </article>
+      </div>
+
+      <div class="utilitarios">
+        <div class="campo">
+          <label for="massaHoras">Horas por aprendiz</label>
+          <div class="input-wrap">
+            <input id="massaHoras" type="number" min="0" step="0.25" value="2">
+            <span class="sufixo">horas</span>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="massaCarga">Carga horária da turma</label>
+          <div class="input-wrap">
+            <input id="massaCarga" type="number" min="1" step="1" value="160">
+            <span class="sufixo">horas</span>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="massaAlunos">Alunos por turma</label>
+          <div class="input-wrap">
+            <input id="massaAlunos" type="number" min="1" step="1" value="30">
+            <span class="sufixo">alunos</span>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>Aplicação em massa</label>
+          <button class="botao primario" id="aplicarTodas">Aplicar às 27 UFs</button>
+        </div>
+
+        <div class="acoes">
+          <button class="botao" id="restaurarBase">Restaurar padrões</button>
+          <button class="botao" id="exportarCsv">Exportar CSV</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="painel">
+      <div class="painel-topo">
+        <div>
+          <h2>Parâmetros e resultados por estado</h2>
+          <p class="subtitulo">
+            Edite em cada linha: aprendizes, horas de acompanhamento, carga horária e alunos por turma.
+          </p>
+        </div>
+
+        <div class="tabela-controles">
+          <input class="busca" id="buscaUf" type="search" placeholder="Buscar UF...">
+          <select class="ordenacao" id="ordenacao">
+            <option value="uf">Ordenar por UF</option>
+            <option value="aprendizes">Mais aprendizes</option>
+            <option value="horas">Mais horas</option>
+            <option value="turmas">Mais turmas equivalentes</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>UF</th>
+              <th>Aprendizes</th>
+              <th>Horas por aprendiz</th>
+              <th>Carga horária da turma</th>
+              <th>Alunos por turma</th>
+              <th>Horas-aluno por turma</th>
+              <th>Horas de acompanhamento</th>
+              <th>Turmas equivalentes</th>
+              <th>Turmas completas</th>
+              <th>Saldo em horas</th>
+              <th>% da próxima turma</th>
+            </tr>
+          </thead>
+          <tbody id="corpoTabela"></tbody>
+          <tfoot>
+            <tr>
+              <td>BRASIL</td>
+              <td id="totalAprendizesTabela">0</td>
+              <td>—</td>
+              <td>—</td>
+              <td>—</td>
+              <td>—</td>
+              <td id="totalHorasTabela">0</td>
+              <td id="totalTurmasEqTabela">0</td>
+              <td id="totalTurmasCompletasTabela">0</td>
+              <td>—</td>
+              <td id="totalFracoesTabela">0,00 eq.</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section class="ranking">
+      <div class="painel" style="margin-top:0;">
+        <h2>Estados com maior impacto</h2>
+        <p class="subtitulo">Ranking pelas turmas equivalentes reduzidas no cenário atual.</p>
+        <div class="ranking-lista" id="rankingLista"></div>
+      </div>
+
+      <div class="premissa">
+        <strong>Como o consolidado é calculado</strong>
+        Cada UF utiliza sua própria fórmula:
+        <br><br>
+        <b>Turmas equivalentes da UF = (aprendizes × horas de acompanhamento) ÷ (carga horária × alunos por turma).</b>
+        <br><br>
+        As turmas completas do Brasil são a soma das turmas inteiras de cada estado. Não é usado o
+        arredondamento do total nacional, porque uma fração de turma de um estado não necessariamente
+        pode ser combinada com a fração de outro.
+        <br><br>
+        A equivalência entre acompanhamento e hora-aluno ainda depende de validação institucional.
+      </div>
+    </section>
+
+    <div class="rodape">Simulador para análise de cenários. Dados editáveis e recalculados em tempo real.</div>
+  </main>
+
+  <script>
+    const baseOriginal = [
+      { uf: "AC", aprendizes: 951 }, { uf: "AL", aprendizes: 1473 },
+      { uf: "AM", aprendizes: 2086 }, { uf: "AP", aprendizes: 117 },
+      { uf: "BA", aprendizes: 12490 }, { uf: "CE", aprendizes: 6076 },
+      { uf: "DF", aprendizes: 927 }, { uf: "ES", aprendizes: 6162 },
+      { uf: "GO", aprendizes: 2327 }, { uf: "MA", aprendizes: 2673 },
+      { uf: "MG", aprendizes: 26468 }, { uf: "MS", aprendizes: 1364 },
+      { uf: "MT", aprendizes: 4881 }, { uf: "PA", aprendizes: 5147 },
+      { uf: "PB", aprendizes: 1965 }, { uf: "PE", aprendizes: 7428 },
+      { uf: "PI", aprendizes: 1164 }, { uf: "PR", aprendizes: 12105 },
+      { uf: "RJ", aprendizes: 15873 }, { uf: "RN", aprendizes: 1473 },
+      { uf: "RO", aprendizes: 759 }, { uf: "RR", aprendizes: 714 },
+      { uf: "RS", aprendizes: 22874 }, { uf: "SC", aprendizes: 6341 },
+      { uf: "SE", aprendizes: 1176 }, { uf: "SP", aprendizes: 28847 },
+      { uf: "TO", aprendizes: 1150 }
+    ];
+
+    const padrao = { horas: 2, carga: 160, alunos: 30 };
+
+    let dados = baseOriginal.map(item => ({ ...item, ...padrao }));
+
+    const $ = id => document.getElementById(id);
+    const nf0 = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
+    const nf2 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    function numeroSeguro(valor, padraoValor = 0) {
+      const n = Number(String(valor).replace(",", "."));
+      return Number.isFinite(n) && n >= 0 ? n : padraoValor;
+    }
+
+    function calcularLinha(item) {
+      const horasAlunoTurma = Math.max(1, item.carga) * Math.max(1, item.alunos);
+      const horasTotal = item.aprendizes * item.horas;
+      const turmasEq = horasTotal / horasAlunoTurma;
+      const turmasCompletas = Math.floor(turmasEq);
+      const saldoHoras = horasTotal - (turmasCompletas * horasAlunoTurma);
+      const percentual = (saldoHoras / horasAlunoTurma) * 100;
+      const fracao = turmasEq - turmasCompletas;
+
+      return {
+        ...item,
+        horasAlunoTurma,
+        horasTotal,
+        turmasEq,
+        turmasCompletas,
+        saldoHoras,
+        percentual,
+        fracao
+      };
+    }
+
+    function dadosCalculados() {
+      return dados.map(calcularLinha);
+    }
+
+    function obterOrdenados(lista) {
+      const tipo = $("ordenacao").value;
+      const busca = $("buscaUf").value.trim().toUpperCase();
+      const filtrados = lista.filter(item => item.uf.includes(busca));
+
+      return filtrados.sort((a, b) => {
+        if (tipo === "aprendizes") return b.aprendizes - a.aprendizes;
+        if (tipo === "horas") return b.horasTotal - a.horasTotal;
+        if (tipo === "turmas") return b.turmasEq - a.turmasEq;
+        return a.uf.localeCompare(b.uf);
+      });
+    }
+
+    function inputCelula(classe, uf, valor, step = "1", extra = "") {
+      return `
+        <input
+          class="celula-input ${classe} ${extra}"
+          type="number"
+          min="0"
+          step="${step}"
+          data-uf="${uf}"
+          value="${valor}">
+      `;
+    }
+
+    function renderTabela() {
+      const lista = obterOrdenados(dadosCalculados());
+
+      $("corpoTabela").innerHTML = lista.map(item => `
+        <tr>
+          <td><span class="uf">${item.uf}</span></td>
+          <td>${inputCelula("input-aprendizes", item.uf, item.aprendizes, "1", "aprendizes")}</td>
+          <td>${inputCelula("input-horas", item.uf, item.horas, "0.25")}</td>
+          <td>${inputCelula("input-carga", item.uf, item.carga, "1")}</td>
+          <td>${inputCelula("input-alunos", item.uf, item.alunos, "1")}</td>
+          <td>${nf0.format(item.horasAlunoTurma)}</td>
+          <td>${nf0.format(item.horasTotal)}</td>
+          <td><strong>${nf2.format(item.turmasEq)}</strong></td>
+          <td>${nf0.format(item.turmasCompletas)}</td>
+          <td>${nf0.format(item.saldoHoras)}</td>
+          <td>${nf2.format(item.percentual)}%</td>
+        </tr>
+      `).join("");
+
+      [
+        ["input-aprendizes", "aprendizes"],
+        ["input-horas", "horas"],
+        ["input-carga", "carga"],
+        ["input-alunos", "alunos"]
+      ].forEach(([classe, campo]) => {
+        document.querySelectorAll(`.${classe}`).forEach(input => {
+          input.addEventListener("input", event => {
+            const item = dados.find(d => d.uf === event.target.dataset.uf);
+            let valor = numeroSeguro(event.target.value);
+
+            if ((campo === "carga" || campo === "alunos") && valor < 1) valor = 1;
+            item[campo] = valor;
+            atualizarPreservandoFoco(event.target, classe);
+          });
+        });
+      });
+    }
+
+    function renderTotais() {
+      const lista = dadosCalculados();
+
+      const totalAprendizes = lista.reduce((s, i) => s + i.aprendizes, 0);
+      const totalHoras = lista.reduce((s, i) => s + i.horasTotal, 0);
+      const totalTurmasEq = lista.reduce((s, i) => s + i.turmasEq, 0);
+      const totalTurmasCompletas = lista.reduce((s, i) => s + i.turmasCompletas, 0);
+      const totalFracoes = lista.reduce((s, i) => s + i.fracao, 0);
+
+      $("kpiAprendizes").textContent = nf0.format(totalAprendizes);
+      $("kpiHoras").textContent = nf0.format(totalHoras);
+      $("kpiTurmasEq").textContent = nf2.format(totalTurmasEq);
+      $("kpiTurmasCompletas").textContent = nf0.format(totalTurmasCompletas);
+
+      $("totalAprendizesTabela").textContent = nf0.format(totalAprendizes);
+      $("totalHorasTabela").textContent = nf0.format(totalHoras);
+      $("totalTurmasEqTabela").textContent = nf2.format(totalTurmasEq);
+      $("totalTurmasCompletasTabela").textContent = nf0.format(totalTurmasCompletas);
+      $("totalFracoesTabela").textContent = `${nf2.format(totalFracoes)} eq.`;
+    }
+
+    function renderRanking() {
+      const lista = [...dadosCalculados()].sort((a, b) => b.turmasEq - a.turmasEq).slice(0, 8);
+      const maximo = lista.length ? lista[0].turmasEq : 1;
+
+      $("rankingLista").innerHTML = lista.map((item, indice) => `
+        <div class="ranking-item">
+          <div class="ranking-posicao">${String(indice + 1).padStart(2, "0")}</div>
+          <div class="ranking-barra">
+            <div class="ranking-fill" style="width:${maximo ? (item.turmasEq / maximo) * 100 : 0}%"></div>
+            <div class="ranking-nome">${item.uf} · ${nf0.format(item.aprendizes)} aprendizes</div>
+          </div>
+          <div class="ranking-valor">${nf2.format(item.turmasEq)} turmas</div>
+        </div>
+      `).join("");
+    }
+
+    function atualizar() {
+      renderTotais();
+      renderRanking();
+      renderTabela();
+    }
+
+    function atualizarPreservandoFoco(elemento, classe) {
+      const uf = elemento.dataset.uf;
+      const inicio = elemento.selectionStart;
+      renderTotais();
+      renderRanking();
+      renderTabela();
+
+      const novo = document.querySelector(`.${classe}[data-uf="${uf}"]`);
+      if (novo) {
+        novo.focus();
+        const posicao = Math.min(inicio ?? novo.value.length, novo.value.length);
+        novo.setSelectionRange?.(posicao, posicao);
+      }
+    }
+
+    function aplicarMassa() {
+      const horas = numeroSeguro($("massaHoras").value, 2);
+      const carga = Math.max(1, numeroSeguro($("massaCarga").value, 160));
+      const alunos = Math.max(1, numeroSeguro($("massaAlunos").value, 30));
+
+      dados.forEach(item => {
+        item.horas = horas;
+        item.carga = carga;
+        item.alunos = alunos;
+      });
+
+      atualizar();
+    }
+
+    function exportarCsv() {
+      const lista = dadosCalculados();
+      const linhas = [
+        [
+          "UF", "Aprendizes", "Horas por aprendiz", "Carga horária da turma",
+          "Alunos por turma", "Horas-aluno por turma", "Horas de acompanhamento",
+          "Turmas equivalentes", "Turmas completas", "Saldo em horas", "% da próxima turma"
+        ],
+        ...lista.map(i => [
+          i.uf, i.aprendizes, i.horas.toFixed(2), i.carga, i.alunos,
+          i.horasAlunoTurma, i.horasTotal.toFixed(2), i.turmasEq.toFixed(4),
+          i.turmasCompletas, i.saldoHoras.toFixed(2), i.percentual.toFixed(2)
+        ])
+      ];
+
+      const csv = "\uFEFF" + linhas.map(linha =>
+        linha.map(valor => `"${String(valor).replace(/"/g, '""')}"`).join(";")
+      ).join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "simulacao_acompanhamento_por_uf.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    $("aplicarTodas").addEventListener("click", aplicarMassa);
+
+    $("restaurarBase").addEventListener("click", () => {
+      dados = baseOriginal.map(item => ({ ...item, ...padrao }));
+      $("massaHoras").value = padrao.horas;
+      $("massaCarga").value = padrao.carga;
+      $("massaAlunos").value = padrao.alunos;
+      atualizar();
+    });
+
+    $("exportarCsv").addEventListener("click", exportarCsv);
+    $("buscaUf").addEventListener("input", renderTabela);
+    $("ordenacao").addEventListener("change", renderTabela);
+
+    atualizar();
+  </script>
+</body>
+</html>

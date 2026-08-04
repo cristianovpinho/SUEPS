@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador de Acompanhamento e Turmas Equivalentes</title>
+  <style>
+    :root {
+      --blue: #034ea2;
+      --blue-dark: #023b7c;
+      --orange: #f16433;
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #667085;
+      --line: #dfe6ef;
+      --success: #157f3b;
+      --warning-bg: #fff7ed;
+      --warning-border: #fdba74;
+      --shadow: 0 18px 45px rgba(3, 78, 162, 0.10);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(3, 78, 162, 0.08), transparent 30%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 32px));
+      margin: 32px auto;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+      color: #fff;
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      right: -90px;
+      top: -110px;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      padding: 7px 11px;
+      border: 1px solid rgba(255,255,255,0.26);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      max-width: 780px;
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1.05;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 800px;
+      color: rgba(255,255,255,0.86);
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(300px, 0.85fr) minmax(0, 1.4fr);
+      gap: 22px;
+      margin-top: 22px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2 {
+      margin: 0 0 6px;
+      font-size: 20px;
+    }
+
+    .panel-subtitle {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: #344054;
+    }
+
+    .input-wrap {
+      display: flex;
+      align-items: center;
+      border: 1px solid #ccd5e1;
+      border-radius: 13px;
+      background: #fff;
+      overflow: hidden;
+      transition: .2s ease;
+    }
+
+    .input-wrap:focus-within {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(3, 78, 162, 0.10);
+    }
+
+    input[type="number"] {
+      width: 100%;
+      border: 0;
+      outline: none;
+      padding: 13px 14px;
+      font-size: 16px;
+      color: var(--text);
+      background: transparent;
+    }
+
+    .suffix {
+      padding: 0 13px;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+      border-left: 1px solid var(--line);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--blue);
+      margin-top: 10px;
+    }
+
+    .range-line {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    .optional {
+      display: inline-block;
+      margin-left: 6px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .formula {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 14px;
+      background: #f7f9fc;
+      border: 1px dashed #cbd5e1;
+      color: #475467;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .formula strong { color: var(--blue-dark); }
+
+    .results {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .result-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      background: linear-gradient(180deg, #fff, #fbfcfe);
+      min-height: 132px;
+    }
+
+    .result-card.highlight {
+      border-color: rgba(3,78,162,.35);
+      background: linear-gradient(180deg, #f7fbff, #eef6ff);
+    }
+
+    .result-card.success {
+      border-color: rgba(21,127,59,.25);
+      background: linear-gradient(180deg, #f8fff9, #f0fbf3);
+    }
+
+    .result-label {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      min-height: 34px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      font-weight: 800;
+    }
+
+    .result-value {
+      margin-top: 8px;
+      font-size: clamp(25px, 3vw, 36px);
+      line-height: 1;
+      font-weight: 900;
+      color: var(--blue-dark);
+      word-break: break-word;
+    }
+
+    .success .result-value { color: var(--success); }
+
+    .result-help {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .progress-box {
+      margin-top: 16px;
+      padding: 18px;
+      border-radius: 18px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+    }
+
+    .progress-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-end;
+      margin-bottom: 10px;
+    }
+
+    .progress-head strong {
+      font-size: 14px;
+    }
+
+    .progress-head span {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .progress-track {
+      height: 12px;
+      background: #e6edf5;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--blue), var(--orange));
+      border-radius: inherit;
+      transition: width .35s ease;
+    }
+
+    .planned-box {
+      display: none;
+      margin-top: 16px;
+      border-radius: 18px;
+      padding: 18px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+    }
+
+    .planned-box.visible { display: block; }
+
+    .planned-title {
+      color: rgba(255,255,255,.76);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .planned-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 12px;
+    }
+
+    .planned-value {
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .planned-label {
+      margin-top: 4px;
+      color: rgba(255,255,255,.74);
+      font-size: 12px;
+    }
+
+    .scenario {
+      margin-top: 22px;
+    }
+
+    .scenario-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+    }
+
+    .scenario-table th,
+    .scenario-table td {
+      text-align: right;
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+
+    .scenario-table th:first-child,
+    .scenario-table td:first-child {
+      text-align: left;
+    }
+
+    .scenario-table th {
+      background: #f8fafc;
+      color: #475467;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+
+    .scenario-table tr:last-child td { border-bottom: 0; }
+    .scenario-table tr.active td {
+      background: #eef6ff;
+      font-weight: 800;
+      color: var(--blue-dark);
+    }
+
+    .warning {
+      margin-top: 22px;
+      padding: 18px;
+      border-radius: 18px;
+      border: 1px solid var(--warning-border);
+      background: var(--warning-bg);
+      color: #7c3d12;
+      line-height: 1.55;
+      font-size: 13px;
+    }
+
+    .warning strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #9a3412;
+    }
+
+    .footer-note {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+      .page { width: min(100% - 20px, 1180px); margin: 10px auto 24px; }
+      .hero, .panel { border-radius: 18px; }
+    }
+
+    @media (max-width: 560px) {
+      .hero, .panel { padding: 20px; }
+      .results { grid-template-columns: 1fr; }
+      .planned-grid { grid-template-columns: 1fr; }
+      .scenario-table th:nth-child(2),
+      .scenario-table td:nth-child(2) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="eyebrow">Simulador nacional</div>
+      <h1>Acompanhamento de aprendizes e turmas equivalentes</h1>
+      <p>
+        Calcule quantas turmas de referência podem ser compensadas pelo volume anual
+        de horas de acompanhamento realizado com os aprendizes.
+      </p>
+    </section>
+
+    <section class="layout">
+      <aside class="panel">
+        <h2>Parâmetros</h2>
+        <p class="panel-subtitle">Altere os valores para testar diferentes cenários.</p>
+
+        <div class="field">
+          <label for="learners">Quantidade de aprendizes</label>
+          <div class="input-wrap">
+            <input id="learners" type="number" min="0" step="1" value="241280" />
+            <span class="suffix">aprendizes</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="hours">Horas de acompanhamento por aprendiz/ano</label>
+          <div class="input-wrap">
+            <input id="hours" type="number" min="0" max="1000" step="0.25" value="2" />
+            <span class="suffix">horas</span>
+          </div>
+          <input id="hoursRange" type="range" min="0" max="10" step="0.25" value="2" />
+          <div class="range-line"><span>0 h</span><span>10 h</span></div>
+        </div>
+
+        <div class="field">
+          <label for="courseHours">Carga horária da turma de referência</label>
+          <div class="input-wrap">
+            <input id="courseHours" type="number" min="1" step="1" value="160" />
+            <span class="suffix">horas</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="students">Quantidade de alunos por turma</label>
+          <div class="input-wrap">
+            <input id="students" type="number" min="1" step="1" value="30" />
+            <span class="suffix">alunos</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="planned">Total de turmas inicialmente planejadas <span class="optional">(opcional)</span></label>
+          <div class="input-wrap">
+            <input id="planned" type="number" min="0" step="1" placeholder="Ex.: 300" />
+            <span class="suffix">turmas</span>
+          </div>
+        </div>
+
+        <div class="formula">
+          <strong>Fórmula principal</strong><br />
+          Horas de acompanhamento = aprendizes × horas por aprendiz.<br />
+          Turmas equivalentes = horas de acompanhamento ÷ (carga horária × alunos por turma).
+        </div>
+      </aside>
+
+      <section class="panel">
+        <h2>Resultado do cenário</h2>
+        <p class="panel-subtitle">Os resultados são atualizados automaticamente.</p>
+
+        <div class="results">
+          <article class="result-card">
+            <div class="result-label">Horas anuais de acompanhamento</div>
+            <div class="result-value" id="totalHours">482.560</div>
+            <div class="result-help">Volume total gerado pelo acompanhamento.</div>
+          </article>
+
+          <article class="result-card">
+            <div class="result-label">Horas-aluno por turma de referência</div>
+            <div class="result-value" id="hoursPerClass">4.800</div>
+            <div class="result-help">160 horas × 30 alunos.</div>
+          </article>
+
+          <article class="result-card highlight">
+            <div class="result-label">Turmas equivalentes reduzidas</div>
+            <div class="result-value" id="equivalentClasses">100,53</div>
+            <div class="result-help">Resultado exato, incluindo fração de turma.</div>
+          </article>
+
+          <article class="result-card success">
+            <div class="result-label">Turmas completas reduzidas</div>
+            <div class="result-value" id="fullClasses">100</div>
+            <div class="result-help">Quantidade inteira totalmente compensada.</div>
+          </article>
+        </div>
+
+        <div class="progress-box">
+          <div class="progress-head">
+            <div>
+              <strong>Saldo após as turmas completas</strong><br />
+              <span id="remainderHours">2.560 horas-aluno</span>
+            </div>
+            <span id="remainderPercent">53,33% de uma turma</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+        </div>
+
+        <div class="planned-box" id="plannedBox">
+          <div class="planned-title">Impacto no planejamento informado</div>
+          <div class="planned-grid">
+            <div>
+              <div class="planned-value" id="remainingExact">0</div>
+              <div class="planned-label">turmas equivalentes restantes</div>
+            </div>
+            <div>
+              <div class="planned-value" id="remainingWhole">0</div>
+              <div class="planned-label">turmas inteiras ainda necessárias</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="scenario">
+          <h2>Cenários comparativos</h2>
+          <p class="panel-subtitle">Comparação rápida de horas por aprendiz.</p>
+          <div style="overflow-x:auto;">
+            <table class="scenario-table">
+              <thead>
+                <tr>
+                  <th>Horas por aprendiz</th>
+                  <th>Horas totais</th>
+                  <th>Turmas equivalentes</th>
+                </tr>
+              </thead>
+              <tbody id="scenarioBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="warning">
+          <strong>Premissa que precisa ser validada</strong>
+          O simulador considera que uma hora de acompanhamento individual equivale a uma
+          hora-aluno e pode ser comparada diretamente com a carga horária total de uma turma.
+          Essa equivalência só deve ser utilizada se as duas atividades forem aceitas no mesmo
+          indicador, meta ou regra de contabilização. Caso contrário, o resultado serve apenas
+          como referência de esforço educacional, não como substituição formal de turmas.
+        </div>
+      </section>
+    </section>
+
+    <div class="footer-note">
+      Simulador elaborado para análise de cenários. Os valores não substituem validação normativa ou institucional.
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const fields = {
+      learners: $("learners"),
+      hours: $("hours"),
+      hoursRange: $("hoursRange"),
+      courseHours: $("courseHours"),
+      students: $("students"),
+      planned: $("planned")
+    };
+
+    const nf0 = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
+    const nf2 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    function safeNumber(value, fallback = 0) {
+      const parsed = Number(String(value).replace(",", "."));
+      return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+    }
+
+    function calculateScenario(hoursPerLearner, learners, hoursPerClass) {
+      const total = learners * hoursPerLearner;
+      const equivalent = hoursPerClass > 0 ? total / hoursPerClass : 0;
+      return { total, equivalent };
+    }
+
+    function renderScenarios(learners, selectedHours, hoursPerClass) {
+      const base = [0.5, 1, 2, 3, 4, 5];
+      if (!base.some(v => Math.abs(v - selectedHours) < 0.001)) base.push(selectedHours);
+      base.sort((a, b) => a - b);
+
+      $("scenarioBody").innerHTML = base.map(h => {
+        const { total, equivalent } = calculateScenario(h, learners, hoursPerClass);
+        const active = Math.abs(h - selectedHours) < 0.001 ? "active" : "";
+        return `
+          <tr class="${active}">
+            <td>${nf2.format(h)} h</td>
+            <td>${nf0.format(total)}</td>
+            <td>${nf2.format(equivalent)}</td>
+          </tr>`;
+      }).join("");
+    }
+
+    function update() {
+      const learners = safeNumber(fields.learners.value);
+      const hours = safeNumber(fields.hours.value);
+      const courseHours = Math.max(1, safeNumber(fields.courseHours.value, 1));
+      const students = Math.max(1, safeNumber(fields.students.value, 1));
+      const plannedRaw = fields.planned.value.trim();
+      const planned = plannedRaw === "" ? null : safeNumber(plannedRaw);
+
+      if (hours <= 10) fields.hoursRange.value = hours;
+
+      const totalHours = learners * hours;
+      const hoursPerClass = courseHours * students;
+      const equivalentClasses = hoursPerClass > 0 ? totalHours / hoursPerClass : 0;
+      const fullClasses = Math.floor(equivalentClasses);
+      const remainderHours = totalHours - (fullClasses * hoursPerClass);
+      const remainderPercent = hoursPerClass > 0 ? (remainderHours / hoursPerClass) * 100 : 0;
+
+      $("totalHours").textContent = nf0.format(totalHours);
+      $("hoursPerClass").textContent = nf0.format(hoursPerClass);
+      $("equivalentClasses").textContent = nf2.format(equivalentClasses);
+      $("fullClasses").textContent = nf0.format(fullClasses);
+      $("remainderHours").textContent = `${nf0.format(remainderHours)} horas-aluno`;
+      $("remainderPercent").textContent = `${nf2.format(remainderPercent)}% de uma turma`;
+      $("progressFill").style.width = `${Math.min(100, Math.max(0, remainderPercent))}%`;
+
+      const plannedBox = $("plannedBox");
+      if (planned !== null) {
+        const remainingExact = Math.max(0, planned - equivalentClasses);
+        const remainingWhole = Math.ceil(remainingExact);
+        $("remainingExact").textContent = nf2.format(remainingExact);
+        $("remainingWhole").textContent = nf0.format(remainingWhole);
+        plannedBox.classList.add("visible");
+      } else {
+        plannedBox.classList.remove("visible");
+      }
+
+      renderScenarios(learners, hours, hoursPerClass);
+    }
+
+    fields.hoursRange.addEventListener("input", () => {
+      fields.hours.value = fields.hoursRange.value;
+      update();
+    });
+
+    [fields.learners, fields.hours, fields.courseHours, fields.students, fields.planned]
+      .forEach(el => el.addEventListener("input", update));
+
+    update();
+  </script>
+</body>
+</html>
