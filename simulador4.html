@@ -74,10 +74,20 @@ h1{margin:0 0 10px;font-size:clamp(28px,4vw,44px)} .hero p{margin:0;max-width:10
 <section class="panel cost">
 <div class="section-title"><span class="num">2</span><h2>Impacto no custo hora-aluno</h2></div>
 <p class="section-intro">Aqui a pergunta é outra: <b>se as horas de acompanhamento passassem a compor a produção reconhecida, mantendo as despesas constantes, como ficaria o custo por hora-aluno?</b></p>
+<div class="field" style="max-width:430px;margin:0 0 18px 44px">
+<label>Base para cálculo do custo hora-aluno</label>
+<div class="wrap">
+<select id="costBaseSelect">
+<option value="todas">Todas as modalidades</option>
+<option value="aprendizagem">Somente modalidades que admitem aprendizagem</option>
+</select>
+</div>
+<div class="sub" id="costBaseHelp" style="margin-top:6px">Utiliza a base completa de hora-aluno e despesas.</div>
+</div>
 <div class="kpis">
-<div class="kpi"><div class="kl">Despesas totais</div><div class="kv" id="cDesp">R$ 0,00</div><div class="kh">Mantidas constantes nesta simulação.</div></div>
-<div class="kpi"><div class="kl">Custo hora-aluno atual</div><div class="kv" id="cAtual">R$ 0,00</div><div class="kh">Despesas ÷ hora-aluno presencial realizado.</div></div>
-<div class="kpi primary"><div class="kl">Produção reconhecida ajustada</div><div class="kv" id="cProd">0</div><div class="kh">Hora-aluno presencial + horas de acompanhamento apropriadas.</div></div>
+<div class="kpi"><div class="kl">Despesas da base selecionada</div><div class="kv" id="cDesp">R$ 0,00</div><div class="kh">Mantidas constantes nesta simulação.</div></div>
+<div class="kpi"><div class="kl">Custo hora-aluno atual</div><div class="kv" id="cAtual">R$ 0,00</div><div class="kh">Despesas ÷ hora-aluno da base selecionada.</div></div>
+<div class="kpi primary"><div class="kl">Produção reconhecida ajustada</div><div class="kv" id="cProd">0</div><div class="kh">Hora-aluno da base selecionada + horas de acompanhamento apropriadas.</div></div>
 <div class="kpi success"><div class="kl">Custo hora-aluno ajustado</div><div class="kv" id="cAjust">R$ 0,00</div><div class="kh">Despesas ÷ produção reconhecida ajustada.</div></div>
 </div>
 <div class="kpis" style="margin-top:13px;grid-template-columns:repeat(2,minmax(0,1fr))">
@@ -91,7 +101,7 @@ h1{margin:0 0 10px;font-size:clamp(28px,4vw,44px)} .hero p{margin:0;max-width:10
 <div class="head"><div><h2>Detalhamento por UF</h2><p class="sub">Escolha qual dimensão deseja analisar. As tabelas são separadas para evitar mistura entre esforço operacional e custo.</p></div><div class="controls"><input id="busca" placeholder="Buscar UF..."><select id="ordem"><option value="uf">Ordenar por UF</option><option value="impacto">Maior impacto</option><option value="base">Maior base</option></select></div></div>
 <div class="tabs"><button class="tab active" data-tab="operacional">Impacto operacional</button><button class="tab" data-tab="custo">Impacto no custo hora-aluno</button></div>
 <div id="tabOperacional" class="tablewrap"><table style="min-width:1200px"><thead><tr><th>UF</th><th id="opThBase">Aprendizes</th><th id="opThParam">Horas/aprendiz</th><th>Hora-aluno presencial</th><th>Horas acompanhamento</th><th>Impacto esforço %</th><th>Hora-aluno residual</th><th>Turmas equivalentes</th></tr></thead><tbody id="opBody"></tbody><tfoot><tr><td>BRASIL</td><td id="opFBase">0</td><td>—</td><td id="opFHA">0</td><td id="opFA">0</td><td id="opFI">0%</td><td id="opFR">0</td><td id="opFEq">0</td></tr></tfoot></table></div>
-<div id="tabCusto" class="tablewrap hidden"><table style="min-width:1350px"><thead><tr><th>UF</th><th>Hora-aluno presencial</th><th>Horas acompanhamento</th><th>Despesas</th><th>Custo HA atual</th><th>Produção ajustada</th><th>Custo HA ajustado</th><th>Redução custo %</th></tr></thead><tbody id="costBody"></tbody><tfoot><tr><td>BRASIL</td><td id="cFHA">0</td><td id="cFA">0</td><td id="cFDesp">R$ 0,00</td><td id="cFAtual">R$ 0,00</td><td id="cFProd">0</td><td id="cFAjust">R$ 0,00</td><td id="cFRed">0%</td></tr></tfoot></table></div>
+<div id="tabCusto" class="tablewrap hidden"><table style="min-width:1350px"><thead><tr><th>UF</th><th id="costThHA">Hora-aluno — todas as modalidades</th><th>Horas acompanhamento</th><th>Despesas</th><th>Custo HA atual</th><th>Produção ajustada</th><th>Custo HA ajustado</th><th>Redução custo %</th></tr></thead><tbody id="costBody"></tbody><tfoot><tr><td>BRASIL</td><td id="cFHA">0</td><td id="cFA">0</td><td id="cFDesp">R$ 0,00</td><td id="cFAtual">R$ 0,00</td><td id="cFProd">0</td><td id="cFAjust">R$ 0,00</td><td id="cFRed">0%</td></tr></tfoot></table></div>
 <div class="note warn"><b>Amapá (AP):</b> não há dados de contratos de aprendizes vigentes em 2025 e 2026. Por isso, a base de aprendizes e as horas de contrato permanecem zeradas. O hora-aluno presencial e as despesas do AP continuam sendo considerados nas análises correspondentes.</div>
 </section>
 </main>
@@ -99,6 +109,8 @@ h1{margin:0 0 10px;font-size:clamp(28px,4vw,44px)} .hero p{margin:0;max-width:10
 <script>
 const ufs=['AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO'];
 const mk=r=>Object.fromEntries(r);
+const haApr2025=mk([["AC",334436],["AL",486196],["AM",948118],["AP",92652],["BA",3303567],["CE",3016285],["DF",352926],["ES",2523103],["GO",1782232],["MA",1169951],["MG",13303167],["MS",876382],["MT",2000417],["PA",1386683],["PB",856054],["PE",1676149],["PI",253355],["PR",2900772],["RJ",8539377],["RN",409595],["RO",791891],["RR",132306],["RS",10944017],["SC",9883040],["SE",873444],["SP",18090721],["TO",228216]]);
+const despApr2025=mk([["AC",5666087],["AL",8074879],["AM",14547804],["AP",1278533],["BA",39916791],["CE",33881807],["DF",8712565],["ES",36995292],["GO",16815887],["MA",13773105],["MG",145666579],["MS",13505387],["MT",25769071],["PA",19591513],["PB",13718323],["PE",16426055],["PI",5150110],["PR",45088171],["RJ",132526581],["RN",4927876],["RO",7891164],["RR",1785941],["RS",131583001],["SC",122476715],["SE",9690170],["SP",462833892],["TO",3378850]]);
 const base2025={
  aprendizes:mk([["AC",703],["AL",1368],["AM",2072],["AP",0],["BA",10757],["CE",5708],["DF",680],["ES",6166],["GO",2406],["MA",2431],["MG",25619],["MS",1325],["MT",2907],["PA",2187],["PB",1376],["PE",6437],["PI",1160],["PR",10811],["RJ",14994],["RN",1139],["RO",594],["RR",587],["RS",21985],["SC",5498],["SE",1113],["SP",24214],["TO",501]]),
  horas:mk([["AC",347224],["AL",947952],["AM",1138800],["AP",0],["BA",5669312],["CE",2581156],["DF",428272],["ES",3847360],["GO",1170216],["MA",1405762],["MG",15532956],["MS",721312],["MT",1581484],["PA",1065172],["PB",572568],["PE",3713254],["PI",493900],["PR",5840776],["RJ",8897052],["RN",628668],["RO",375428],["RR",286008],["RS",13762216],["SC",2920980],["SE",375096],["SP",16864046],["TO",295772]]),
@@ -106,22 +118,33 @@ const base2025={
  despesas:mk([["AC",26486845],["AL",38789893],["AM",45944483],["AP",12659782],["BA",146869514],["CE",58170285],["DF",60427546],["ES",83896057],["GO",90844856],["MA",48627222],["MG",377886499],["MS",54108646],["MT",115764059],["PA",80973259],["PB",31569902],["PE",78118972],["PI",31231681],["PR",170495420],["RJ",375435987],["RN",34087825],["RO",12686251],["RR",10838891],["RS",175989889],["SC",231209653],["SE",39625950],["SP",1369053245],["TO",28165780]])
 };
 const zero=()=>Object.fromEntries(ufs.map(u=>[u,0]));
-const bases={"2025":base2025,"2026":{aprendizes:zero(),horas:zero(),ha:zero(),despesas:zero()}};
+const bases={"2025":{...base2025,haApr:haApr2025,despesasApr:despApr2025},"2026":{aprendizes:zero(),horas:zero(),ha:zero(),despesas:zero(),haApr:zero(),despesasApr:zero()}};
 const nf0=new Intl.NumberFormat("pt-BR",{maximumFractionDigits:0});
 const nf2=new Intl.NumberFormat("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const brl=new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
 const $=x=>document.getElementById(x);
-let ano="2025",modo="aprendizes",h=2,pct=1,carga=160,alunos=30,tab="operacional";
+let ano="2025",modo="aprendizes",h=2,pct=1,carga=160,alunos=30,tab="operacional",costBase="todas";
 
 function total(o){return Object.values(o).reduce((s,v)=>s+v,0)}
 function base(){return bases[ano][modo]}
 function acomp(v){return modo==="aprendizes"?v*h:v*pct/100}
 function hat(){return Math.max(1,carga)*Math.max(1,alunos)}
 function rows(){return ufs.map(uf=>{
- const b=base()[uf]||0, ha=bases[ano].ha[uf]||0, d=bases[ano].despesas[uf]||0, a=acomp(b);
- const impacto=ha?Math.min(100,a/ha*100):0, residual=Math.max(0,ha-a), eq=a/hat();
- const atual=ha?d/ha:0, prod=ha+a, ajust=prod?d/prod:0, red=atual?Math.max(0,(1-ajust/atual)*100):0;
- return {uf,b,ha,d,a,impacto,residual,eq,atual,prod,ajust,red};
+ const b=base()[uf]||0;
+ const haOp=bases[ano].ha[uf]||0;
+ const a=acomp(b);
+ const impacto=haOp?Math.min(100,a/haOp*100):0;
+ const residual=Math.max(0,haOp-a);
+ const eq=a/hat();
+
+ const haCost=costBase==="aprendizagem"?(bases[ano].haApr[uf]||0):haOp;
+ const dCost=costBase==="aprendizagem"?(bases[ano].despesasApr[uf]||0):(bases[ano].despesas[uf]||0);
+ const atual=haCost?dCost/haCost:0;
+ const prod=haCost+a;
+ const ajust=prod?dCost/prod:0;
+ const red=atual?Math.max(0,(1-ajust/atual)*100):0;
+
+ return {uf,b,haOp,a,impacto,residual,eq,haCost,dCost,atual,prod,ajust,red};
 })}
 
 function renderMode(){
@@ -137,31 +160,97 @@ function renderMode(){
 }
 
 function renderNational(){
- const r=rows(),tb=r.reduce((s,x)=>s+x.b,0),tha=r.reduce((s,x)=>s+x.ha,0),td=r.reduce((s,x)=>s+x.d,0),ta=r.reduce((s,x)=>s+x.a,0);
- const imp=tha?Math.min(100,ta/tha*100):0,res=Math.max(0,tha-ta),atual=tha?td/tha:0,prod=tha+ta,aj=prod?td/prod:0,red=atual?Math.max(0,(1-aj/atual)*100):0;
+ const r=rows();
+ const tb=r.reduce((s,x)=>s+x.b,0);
+ const thaOp=r.reduce((s,x)=>s+x.haOp,0);
+ const ta=r.reduce((s,x)=>s+x.a,0);
+ const imp=thaOp?Math.min(100,ta/thaOp*100):0;
+ const res=Math.max(0,thaOp-ta);
+
+ const thaCost=r.reduce((s,x)=>s+x.haCost,0);
+ const tdCost=r.reduce((s,x)=>s+x.dCost,0);
+ const atual=thaCost?tdCost/thaCost:0;
+ const prod=thaCost+ta;
+ const aj=prod?tdCost/prod:0;
+ const red=atual?Math.max(0,(1-aj/atual)*100):0;
+
  $("baseValue").textContent=nf0.format(tb);
- $("opHA").textContent=nf0.format(tha); $("opAcomp").textContent=nf0.format(ta); $("opImpacto").textContent=nf2.format(imp)+"%"; $("opResidual").textContent=nf0.format(res); $("opFill").style.width=imp+"%";
- $("cDesp").textContent=brl.format(td); $("cAtual").textContent=brl.format(atual); $("cProd").textContent=nf0.format(prod); $("cAjust").textContent=brl.format(aj); $("cReducao").textContent=nf2.format(red)+"%"; $("cHoras").textContent=nf0.format(ta);
- $("hLabel").textContent=nf2.format(h); $("hSlider").value=Math.min(40,h); $("hManual").value=h;
- $("pLabel").textContent=nf2.format(pct)+"%"; $("pSlider").value=pct; $("pManual").value=pct;
- $("carga").value=carga; $("alunos").value=alunos;
+ $("opHA").textContent=nf0.format(thaOp);
+ $("opAcomp").textContent=nf0.format(ta);
+ $("opImpacto").textContent=nf2.format(imp)+"%";
+ $("opResidual").textContent=nf0.format(res);
+ $("opFill").style.width=imp+"%";
+
+ $("cDesp").textContent=brl.format(tdCost);
+ $("cAtual").textContent=brl.format(atual);
+ $("cProd").textContent=nf0.format(prod);
+ $("cAjust").textContent=brl.format(aj);
+ $("cReducao").textContent=nf2.format(red)+"%";
+ $("cHoras").textContent=nf0.format(ta);
+
+ $("hLabel").textContent=nf2.format(h);
+ $("hSlider").value=Math.min(40,h);
+ $("hManual").value=h;
+ $("pLabel").textContent=nf2.format(pct)+"%";
+ $("pSlider").value=pct;
+ $("pManual").value=pct;
+ $("carga").value=carga;
+ $("alunos").value=alunos;
+
+ $("costBaseSelect").value=costBase;
+ $("costBaseHelp").textContent=costBase==="aprendizagem"
+ ? "Utiliza somente hora-aluno e despesas das modalidades que admitem aprendizagem."
+ : "Utiliza a base completa de hora-aluno e despesas de todas as modalidades.";
+ $("costThHA").textContent=costBase==="aprendizagem"
+ ? "Hora-aluno — modalidades que admitem aprendizagem"
+ : "Hora-aluno — todas as modalidades";
 }
 
 function sortedRows(){
- const q=$("busca").value.trim().toUpperCase(),o=$("ordem").value; let r=rows().filter(x=>x.uf.includes(q));
- r.sort((a,b)=>o==="impacto"?(tab==="operacional"?b.impacto-a.impacto:b.red-a.red):o==="base"?b.b-a.b:a.uf.localeCompare(b.uf)); return r;
+ const q=$("busca").value.trim().toUpperCase(),o=$("ordem").value;
+ let r=rows().filter(x=>x.uf.includes(q));
+ r.sort((a,b)=>o==="impacto"?(tab==="operacional"?b.impacto-a.impacto:b.red-a.red):o==="base"?b.b-a.b:a.uf.localeCompare(b.uf));
+ return r;
 }
 function apNote(x){return x.uf==="AP"?'<span class="nodata">sem contratos de aprendizagem</span>':""}
 function renderTables(){
  let r=sortedRows(),param=modo==="aprendizes"?nf2.format(h)+" h":nf2.format(pct)+"%";
- $("opBody").innerHTML=r.map(x=>`<tr><td><span class="pill">${x.uf}</span>${apNote(x)}</td><td>${nf0.format(x.b)}</td><td>${param}</td><td>${nf0.format(x.ha)}</td><td>${nf0.format(x.a)}</td><td class="green">${nf2.format(x.impacto)}%</td><td>${nf0.format(x.residual)}</td><td>${nf2.format(x.eq)}</td></tr>`).join("");
- $("costBody").innerHTML=r.map(x=>`<tr><td><span class="pill">${x.uf}</span>${apNote(x)}</td><td>${nf0.format(x.ha)}</td><td>${nf0.format(x.a)}</td><td>${brl.format(x.d)}</td><td>${brl.format(x.atual)}</td><td>${nf0.format(x.prod)}</td><td class="green">${brl.format(x.ajust)}</td><td class="green">${nf2.format(x.red)}%</td></tr>`).join("");
- const all=rows(),tb=all.reduce((s,x)=>s+x.b,0),tha=all.reduce((s,x)=>s+x.ha,0),ta=all.reduce((s,x)=>s+x.a,0),td=all.reduce((s,x)=>s+x.d,0);
- const imp=tha?Math.min(100,ta/tha*100):0,res=Math.max(0,tha-ta),eq=all.reduce((s,x)=>s+x.eq,0),at=tha?td/tha:0,prod=tha+ta,aj=prod?td/prod:0,red=at?Math.max(0,(1-aj/at)*100):0;
- $("opFBase").textContent=nf0.format(tb); $("opFHA").textContent=nf0.format(tha); $("opFA").textContent=nf0.format(ta); $("opFI").textContent=nf2.format(imp)+"%"; $("opFR").textContent=nf0.format(res); $("opFEq").textContent=nf2.format(eq);
- $("cFHA").textContent=nf0.format(tha); $("cFA").textContent=nf0.format(ta); $("cFDesp").textContent=brl.format(td); $("cFAtual").textContent=brl.format(at); $("cFProd").textContent=nf0.format(prod); $("cFAjust").textContent=brl.format(aj); $("cFRed").textContent=nf2.format(red)+"%";
+
+ $("opBody").innerHTML=r.map(x=>`<tr><td><span class="pill">${x.uf}</span>${apNote(x)}</td><td>${nf0.format(x.b)}</td><td>${param}</td><td>${nf0.format(x.haOp)}</td><td>${nf0.format(x.a)}</td><td class="green">${nf2.format(x.impacto)}%</td><td>${nf0.format(x.residual)}</td><td>${nf2.format(x.eq)}</td></tr>`).join("");
+
+ $("costBody").innerHTML=r.map(x=>`<tr><td><span class="pill">${x.uf}</span>${apNote(x)}</td><td>${nf0.format(x.haCost)}</td><td>${nf0.format(x.a)}</td><td>${brl.format(x.dCost)}</td><td>${brl.format(x.atual)}</td><td>${nf0.format(x.prod)}</td><td class="green">${brl.format(x.ajust)}</td><td class="green">${nf2.format(x.red)}%</td></tr>`).join("");
+
+ const all=rows();
+ const tb=all.reduce((s,x)=>s+x.b,0);
+ const thaOp=all.reduce((s,x)=>s+x.haOp,0);
+ const ta=all.reduce((s,x)=>s+x.a,0);
+ const imp=thaOp?Math.min(100,ta/thaOp*100):0;
+ const res=Math.max(0,thaOp-ta);
+ const eq=all.reduce((s,x)=>s+x.eq,0);
+
+ const thaCost=all.reduce((s,x)=>s+x.haCost,0);
+ const tdCost=all.reduce((s,x)=>s+x.dCost,0);
+ const at=thaCost?tdCost/thaCost:0;
+ const prod=thaCost+ta;
+ const aj=prod?tdCost/prod:0;
+ const red=at?Math.max(0,(1-aj/at)*100):0;
+
+ $("opFBase").textContent=nf0.format(tb);
+ $("opFHA").textContent=nf0.format(thaOp);
+ $("opFA").textContent=nf0.format(ta);
+ $("opFI").textContent=nf2.format(imp)+"%";
+ $("opFR").textContent=nf0.format(res);
+ $("opFEq").textContent=nf2.format(eq);
+
+ $("cFHA").textContent=nf0.format(thaCost);
+ $("cFA").textContent=nf0.format(ta);
+ $("cFDesp").textContent=brl.format(tdCost);
+ $("cFAtual").textContent=brl.format(at);
+ $("cFProd").textContent=nf0.format(prod);
+ $("cFAjust").textContent=brl.format(aj);
+ $("cFRed").textContent=nf2.format(red)+"%";
 }
-function renderNote(){$("yearNote").className="note"+(ano==="2026"?" warn":""); $("yearNote").innerHTML=ano==="2025"?"<b>2025:</b> bases carregadas: 154.738 aprendizes, 91.462.742 horas de contrato, 257.832.641 hora-aluno de cursos presenciais e R$ 3.829.958.392,00 em despesas.":"<b>2026:</b> estrutura pronta e inicialmente zerada. O botão acima permite copiar 2025 apenas para simulação provisória.";}
+function renderNote(){$("yearNote").className="note"+(ano==="2026"?" warn":""); $("yearNote").innerHTML=ano==="2025"?"<b>2025:</b> bases carregadas para os dois cenários de custo. A base completa possui 257.832.641 hora-aluno e R$ 3.829.958.392,00 em despesas. A base restrita às modalidades que admitem aprendizagem possui 87.155.052 hora-aluno e R$ 1.341.672.149,00 em despesas.":"<b>2026:</b> estrutura pronta e inicialmente zerada. O botão acima permite copiar 2025 apenas para simulação provisória.";}
 function render(){$("ano").value=ano;renderMode();renderNational();renderTables();renderNote();}
 
 document.querySelectorAll(".mode-card").forEach(x=>x.onclick=()=>{modo=x.dataset.mode;render()});
@@ -171,10 +260,10 @@ document.querySelectorAll("[data-h]").forEach(x=>x.onclick=()=>{h=+x.dataset.h;r
 $("pSlider").oninput=e=>{pct=Math.max(0,Math.min(100,+e.target.value||0));render()}; $("pManual").oninput=e=>{pct=Math.max(0,Math.min(100,+e.target.value||0));render()};
 document.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{pct=+x.dataset.p;render()});
 $("carga").oninput=e=>{carga=Math.max(1,+e.target.value||1);render()}; $("alunos").oninput=e=>{alunos=Math.max(1,+e.target.value||1);render()};
-$("busca").oninput=renderTables; $("ordem").onchange=renderTables;
+$("busca").oninput=renderTables; $("ordem").onchange=renderTables; $("costBaseSelect").onchange=e=>{costBase=e.target.value;render()};
 document.querySelectorAll(".tab").forEach(x=>x.onclick=()=>{tab=x.dataset.tab;document.querySelectorAll(".tab").forEach(y=>y.classList.toggle("active",y===x));$("tabOperacional").classList.toggle("hidden",tab!=="operacional");$("tabCusto").classList.toggle("hidden",tab!=="custo");renderTables()});
-$("copy").onclick=()=>{bases["2026"]={aprendizes:{...bases["2025"].aprendizes},horas:{...bases["2025"].horas},ha:{...bases["2025"].ha},despesas:{...bases["2025"].despesas}};ano="2026";render()};
-$("csv").onclick=()=>{const r=rows(),rowsCsv=[["Ano","Modo","UF","Base","Horas acompanhamento","Hora-aluno presencial","Impacto operacional %","HA residual","Despesas","Custo HA atual","Produção ajustada","Custo HA ajustado","Redução custo %"],...r.map(x=>[ano,modo,x.uf,x.b,x.a,x.ha,x.impacto,x.residual,x.d,x.atual,x.prod,x.ajust,x.red])];const csv="\uFEFF"+rowsCsv.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(";")).join("\n");const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=`simulador_separado_${ano}_${modo}.csv`;a.click();URL.revokeObjectURL(u)};
+$("copy").onclick=()=>{bases["2026"]={aprendizes:{...bases["2025"].aprendizes},horas:{...bases["2025"].horas},ha:{...bases["2025"].ha},despesas:{...bases["2025"].despesas},haApr:{...bases["2025"].haApr},despesasApr:{...bases["2025"].despesasApr}};ano="2026";render()};
+$("csv").onclick=()=>{const r=rows(),rowsCsv=[["Ano","Modo acompanhamento","Base custo","UF","Base acompanhamento","Horas acompanhamento","Hora-aluno operacional","Impacto operacional %","HA residual","Hora-aluno custo","Despesas custo","Custo HA atual","Produção ajustada","Custo HA ajustado","Redução custo %"],...r.map(x=>[ano,modo,costBase,x.uf,x.b,x.a,x.haOp,x.impacto,x.residual,x.haCost,x.dCost,x.atual,x.prod,x.ajust,x.red])];const csv="\uFEFF"+rowsCsv.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(";")).join("\n");const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=`simulador_${ano}_${modo}_${costBase}.csv`;a.click();URL.revokeObjectURL(u)};
 render();
 </script>
 </body></html>
