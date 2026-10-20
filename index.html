@@ -691,7 +691,7 @@
 
             const grupos = {};
             professionals.forEach(p => {
-                const gerencia = p.gerencia || 'Outros';
+                const gerencia = p.gerencia || 'Superintendência';
                 if (!grupos[gerencia]) grupos[gerencia] = {};
                 const subKey = p.subSec || 'Sem Coordenação';
                 if (!grupos[gerencia][subKey]) grupos[gerencia][subKey] = [];
