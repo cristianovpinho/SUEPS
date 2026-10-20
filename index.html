@@ -207,6 +207,15 @@
         .area-panel .gerente-card { background: var(--area-soft) !important; }
         .area-heading { border-color: var(--area-color) !important; }
         .professional-card { border-top: 4px solid var(--area-color) !important; }
+        .professional-card .avatar { position: relative; overflow: hidden; }
+        .professional-card .avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: inherit; }
+        .contact-footer { margin-top: 18px; padding-top: 12px; border-top: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 8px; }
+        .contact-email, .contact-teams { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; line-height: 1.5; color: #64748b; text-decoration: none; align-self: flex-start; }
+        .contact-email span { overflow-wrap: anywhere; }
+        .contact-email svg, .contact-teams svg { flex-shrink: 0; }
+        .contact-teams { padding: 3px 0; background: transparent; font-weight: 400; }
+        .contact-email:hover, .contact-teams:hover { color: #1a4b9f; text-decoration: underline; }
+        .contact-email:focus-visible, .contact-teams:focus-visible { outline: 2px solid #1a4b9f; outline-offset: 4px; border-radius: 3px; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
@@ -331,41 +340,41 @@
         const CONFIG = {
             SHEET_ID: '1Vwp4olbNoo4cLfeI92OP3Qr20thXiRBQ2iJSGLfcS0g',
             SHEET_NAME: 'Dados',
-            CACHE_KEY: 'senai_professionals_cache_v3',
+            CACHE_KEY: 'senai_professionals_cache_v4',
             CACHE_EXPIRY: 2 * 60 * 1000,
         };
 
         let professionals = [];
 
         const PALETA_CORES = {
-    'Soluções Educacionais': {
-        accent: '#355d9b', ink: '#102d5c',
-        background: '#f4f7fb', border: '#cfdcf0',
-        avatar: '#e6edf7', avatarText: '#102d5c',
-        tagGerencia: '#355d9b', tagGerenciaText: '#ffffff',
-        tagSub: '#e6edf7', tagSubText: '#102d5c',
-        temaBadge: '#e6edf7', temaBadgeText: '#102d5c', temaBadgeHover: '#cfdcf0',
-        coordinatorBorder: '#355d9b', coordinatorBadge: '#174087', coordinatorBadgeText: '#ffffff'
-    },
-    'Negócios Educacionais': {
-        accent: '#d43a3a', ink: '#5c1010',
-        background: '#fdf5f5', border: '#f7cfcf',
-        avatar: '#fbe6e6', avatarText: '#5c1010',
-        tagGerencia: '#d43a3a', tagGerenciaText: '#ffffff',
-        tagSub: '#fbe6e6', tagSubText: '#5c1010',
-        temaBadge: '#fbe6e6', temaBadgeText: '#5c1010', temaBadgeHover: '#f7cfcf',
-        coordinatorBorder: '#d43a3a', coordinatorBadge: '#8f1d1d', coordinatorBadgeText: '#ffffff'
-    },
-    'Operações Educacionais': {
-        accent: '#f1e137', ink: '#4a4305',
-        background: '#fefdf4', border: '#f9f5c5',
-        avatar: '#fcf8d4', avatarText: '#4a4305',
-        tagGerencia: '#f1e137', tagGerenciaText: '#3b3504',
-        tagSub: '#fcf8d4', tagSubText: '#4a4305',
-        temaBadge: '#fcf8d4', temaBadgeText: '#4a4305', temaBadgeHover: '#f9f5c5',
-        coordinatorBorder: '#d6c522', coordinatorBadge: '#80750d', coordinatorBadgeText: '#ffffff'
-    }
-};
+            'Soluções Educacionais': {
+                accent: '#355d9b', ink: '#234474',
+                background: '#F5F8FC', border: '#DCE5F2',
+                avatar: '#EAF0F9', avatarText: '#234474',
+                tagGerencia: '#355d9b', tagGerenciaText: '#ffffff',
+                tagSub: '#EAF0F9', tagSubText: '#234474',
+                temaBadge: '#EAF0F9', temaBadgeText: '#234474', temaBadgeHover: '#DCE5F2',
+                coordinatorBorder: '#355d9b', coordinatorBadge: '#234474', coordinatorBadgeText: '#ffffff'
+            },
+            'Negócios Educacionais': {
+                accent: '#2f1d80', ink: '#2F1D80',
+                background: '#F7F6FC', border: '#DED9EF',
+                avatar: '#EDEAF7', avatarText: '#2F1D80',
+                tagGerencia: '#2f1d80', tagGerenciaText: '#ffffff',
+                tagSub: '#EDEAF7', tagSubText: '#2F1D80',
+                temaBadge: '#EDEAF7', temaBadgeText: '#2F1D80', temaBadgeHover: '#DED9EF',
+                coordinatorBorder: '#2f1d80', coordinatorBadge: '#2F1D80', coordinatorBadgeText: '#ffffff'
+            },
+            'Operações Educacionais': {
+                accent: '#bbecff', ink: '#183E59',
+                background: '#F5FCFF', border: '#BBECFF',
+                avatar: '#BBECFF', avatarText: '#183E59',
+                tagGerencia: '#bbecff', tagGerenciaText: '#183E59',
+                tagSub: '#E7F7FF', tagSubText: '#183E59',
+                temaBadge: '#E7F7FF', temaBadgeText: '#183E59', temaBadgeHover: '#BBECFF',
+                coordinatorBorder: '#bbecff', coordinatorBadge: '#183E59', coordinatorBadgeText: '#ffffff'
+            }
+        };
 
         const CORES_PADRAO = {
             background: '#f8fafc',
@@ -509,6 +518,7 @@
                         subSec: getValue(['subsec', 'subSec', 'coordenacao', 'coordenação']) || '',
                         email: getValue(['email', 'e-mail', 'contato']) || '',
                         phone: getValue(['phone', 'telefone', 'fone']) || '',
+                        foto: getValue(['foto', 'photo', 'url_foto', 'link_foto']) || '',
                         temas: parsedThemes.temas,
                         subtemas: parsedThemes.subtemas
                     };
@@ -777,6 +787,13 @@
             container.innerHTML = html;
         }
 
+        function photoUrl(value) {
+            try {
+                const url = new URL(String(value || '').trim());
+                return ['https:', 'http:'].includes(url.protocol) && !url.username && !url.password ? url.href : '';
+            } catch { return ''; }
+        }
+
         function createProfessionalCard(prof, isCoordinatorFlag, isManagerFlag) {
             const e = escapeHtml;
             const cores = PALETA_CORES[prof.gerencia] || CORES_PADRAO;
@@ -784,6 +801,7 @@
             const isSuper = normalizeSearch(prof.role).includes('superintendente');
             const managerClass = isManagerFlag && !isSuper ? 'gerente-card' : '';
             const roleVisible = isCoordinatorFlag || isManagerFlag;
+            const foto = photoUrl(prof.foto);
             const subtemas = prof.subtemas || [];
             const temas = [...(prof.temas || [])];
             subtemas.forEach(item => {
@@ -796,17 +814,17 @@
             }).join('') + subtemas.filter(item => !item.tema).map(item => badge(item.nome, `${item.tema} - ${item.nome}`, true)).join('');
             const email = String(prof.email || '').trim();
             const validEmail = /^[^\s@<>"&,;?]+@[^\s@<>"&,;?]+\.[^\s@<>"&,;?]+$/.test(email);
-            const contactHtml = validEmail ? `
-                <a class="block text-xs text-slate-600 hover:text-blue-700 underline break-all mt-3" href="mailto:${e(encodeURIComponent(email))}" aria-label="Enviar e-mail para ${e(prof.name)}">${e(email)}</a>
-                <div class="flex flex-wrap gap-2 mt-3">
-                    <a href="mailto:${e(encodeURIComponent(email))}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"><i data-lucide="mail" class="w-4 h-4"></i>E-mail</a>
-                    <a href="https://teams.microsoft.com/l/chat/0/0?users=${e(encodeURIComponent(email))}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700" aria-label="Conversar com ${e(prof.name)} no Teams"><i data-lucide="message-circle" class="w-4 h-4"></i>Fale comigo no Teams</a>
+            const contactHtml = validEmail || prof.phone ? `
+                <div class="contact-footer">
+                    ${validEmail ? `<a href="mailto:${e(encodeURIComponent(email))}" class="contact-email" aria-label="Enviar e-mail para ${e(prof.name)}"><i data-lucide="mail" class="w-3.5 h-3.5"></i><span>${e(email)}</span></a>
+                    <a href="https://teams.microsoft.com/l/chat/0/0?users=${e(encodeURIComponent(email))}" target="_blank" rel="noopener noreferrer" class="contact-teams" aria-label="Conversar com ${e(prof.name)} no Teams"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i>Conversar no Teams</a>` : ''}
+                    ${prof.phone ? `<p class="text-xs text-slate-500">${e(prof.phone)}</p>` : ''}
                 </div>` : '';
             return `<article class="professional-card ${isCoordinatorFlag ? 'coordinator' : ''} ${managerClass}" style="${areaStyle(prof.gerencia)}background:${cores.background};border-color:${cores.border};${isCoordinatorFlag ? 'border-left-color:' + cores.coordinatorBorder : ''}">
                 ${isCoordinatorFlag ? '<span class="coordinator-star" style="color:var(--area-color)"><i data-lucide="badge-check" class="w-4 h-4"></i></span>' : ''}
                 <div>
                     <div class="flex items-start gap-3 mb-3">
-                        <div class="avatar" style="background:${cores.avatar};color:${cores.avatarText}">${e(initials)}</div>
+                        <div class="avatar" style="background:${cores.avatar};color:${cores.avatarText}"><span>${e(initials)}</span>${foto ? `<img src="${e(foto)}" alt="Foto de ${e(prof.name)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</div>
                         <div><h4 class="font-bold text-slate-900 text-base leading-snug">${e(prof.name || 'Nome não informado')}</h4>
                             ${roleVisible ? `<p class="text-xs text-slate-600 mt-1">${e(prof.role)}</p>` : ''}
                             ${isCoordinatorFlag ? `<span class="coordinator-badge mt-1" style="background:${cores.coordinatorBadge};color:white">Coordenação</span>` : ''}
@@ -814,13 +832,12 @@
                     </div>
                     <p class="text-xs font-semibold mb-1" style="color:${cores.temaBadgeText}">${e(prof.gerencia)}</p>
                     ${prof.subSec && prof.subSec !== 'Sem Coordenação' ? `<p class="text-xs text-slate-500">${e(prof.subSec)}</p>` : ''}
-                    ${contactHtml}
-                    ${prof.phone ? `<p class="text-xs text-slate-500 mt-2">${e(prof.phone)}</p>` : ''}
                 </div>
                 <div class="mt-4 border-t pt-3" style="border-color:${cores.border}">
                     <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Temas e subtemas</span>
                     <div>${topicHtml || '<span class="text-xs text-slate-400">Nenhum tema cadastrado</span>'}</div>
                 </div>
+                ${contactHtml}
             </article>`;
         }
 
