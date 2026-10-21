@@ -242,8 +242,8 @@
         .directory-section .area-coord { background: #E0E7EF !important; border: 0 !important; }
         .directory-section .leader-divider span { color: #475569; font-size: 11px; }
         .directory-section .leader-divider::after { background: #CBD5E1; }
-        .professional-card .tema-badge { font-weight: 600; padding: 6px 12px; border-radius: 7px; }
-        .professional-card .tema-badge:hover { text-decoration: none; filter: brightness(.94); }
+        .professional-card .tema-badge { font-weight: 500; padding: 4px 9px; border-radius: 4px; }
+        .professional-card .tema-badge:hover { text-decoration: underline; filter: none; }
         .professional-card .tema-badge:focus-visible { outline: 2px solid var(--area-color); outline-offset: 3px; }
         .professional-card .subtema-badge { font-weight: 500; }
         @media (max-width: 640px) {
@@ -375,14 +375,14 @@
 
         const PALETA_CORES = {
             'Superintendência': {
-                accent: '#12366F', ink: '#12366F', background: '#ffffff', border: '#E2E8F0',
+                accent: '#12366F', ink: '#12366F', themeSurface: '#EFF3F8', themeBorder: '#D9E1ED', background: '#ffffff', border: '#E2E8F0',
                 avatar: '#12366F', avatarText: '#ffffff', tagGerencia: '#12366F', tagGerenciaText: '#ffffff',
                 tagSub: '#ffffff', tagSubText: '#12366F', temaBadge: '#12366F', temaBadgeText: '#ffffff',
                 temaBadgeHover: '#12366F', coordinatorBorder: '#E2E8F0', coordinatorBadge: '#12366F',
                 coordinatorBadgeText: '#ffffff', soft: '#ffffff'
             },
             'Soluções Educacionais': {
-                accent: '#1A4B9F', ink: '#1A4B9F',
+                accent: '#1A4B9F', ink: '#1A4B9F', themeSurface: '#F0F4FB', themeBorder: '#D6E1F2',
                 background: '#ffffff', border: '#E2E8F0',
                 avatar: '#1A4B9F', avatarText: '#ffffff',
                 tagGerencia: '#1A4B9F', tagGerenciaText: '#ffffff',
@@ -392,7 +392,7 @@
                 soft: '#ffffff'
             },
             'Negócios Educacionais': {
-                accent: '#A85A05', ink: '#A85A05',
+                accent: '#A85A05', ink: '#A85A05', themeSurface: '#FCF6EE', themeBorder: '#EEDFCB',
                 background: '#ffffff', border: '#E2E8F0',
                 avatar: '#A85A05', avatarText: '#ffffff',
                 tagGerencia: '#A85A05', tagGerenciaText: '#ffffff',
@@ -402,7 +402,7 @@
                 soft: '#ffffff'
             },
             'Operações Educacionais': {
-                accent: '#0B6B60', ink: '#0B6B60',
+                accent: '#0B6B60', ink: '#0B6B60', themeSurface: '#EFF8F6', themeBorder: '#D3E9E3',
                 background: '#ffffff', border: '#E2E8F0',
                 avatar: '#0B6B60', avatarText: '#ffffff',
                 tagGerencia: '#0B6B60', tagGerenciaText: '#ffffff',
@@ -880,7 +880,7 @@
             subtemas.forEach(item => {
                 if (item.tema && !temas.some(tema => normalizeSearch(tema) === normalizeSearch(item.tema))) temas.push(item.tema);
             });
-            const badge = (text, term, sub = false) => `<button type="button" class="tema-badge ${sub ? 'subtema-badge' : ''}" style="background:${sub ? '#ffffff' : (cores.accent || '#475569')};color:${sub ? (cores.ink || '#334155') : '#ffffff'};${sub ? 'border:1px solid #CBD5E1' : 'border:1px solid transparent'}" data-search-term="${e(term)}">${e(text)}</button>`;
+            const badge = (text, term, sub = false) => `<button type="button" class="tema-badge ${sub ? 'subtema-badge' : ''}" style="background:${sub ? '#ffffff' : (cores.themeSurface || '#F5F7FA')};color:${cores.ink || '#475569'};border:1px solid ${cores.themeBorder || '#E2E8F0'}" data-search-term="${e(term)}">${e(text)}</button>`;
             const topicHtml = temas.map(tema => {
                 const children = subtemas.filter(item => normalizeSearch(item.tema) === normalizeSearch(tema));
                 return `<div class="mb-2">${badge(tema, tema)}${children.length ? `<div class="pl-3 border-l-2 ml-2" style="border-color:${cores.border}">${children.map(item => badge(item.nome, `${item.tema} - ${item.nome}`, true)).join('')}</div>` : ''}</div>`;
