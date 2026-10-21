@@ -333,7 +333,7 @@
         const CONFIG = {
             SHEET_ID: '1Vwp4olbNoo4cLfeI92OP3Qr20thXiRBQ2iJSGLfcS0g',
             SHEET_NAME: 'Dados',
-            CACHE_KEY: 'senai_professionals_cache_v5',
+            CACHE_KEY: 'senai_professionals_cache_v6',
             CACHE_EXPIRY: 2 * 60 * 1000,
         };
 
@@ -341,31 +341,34 @@
 
         const PALETA_CORES = {
             'Soluções Educacionais': {
-                accent: '#51875E', ink: '#24432C',
-                background: '#F5F9F5', border: '#DFEADF',
-                avatar: '#ECF3ED', avatarText: '#24432C',
-                tagGerencia: '#51875E', tagGerenciaText: '#ffffff',
-                tagSub: '#ECF3ED', tagSubText: '#24432C',
-                temaBadge: '#ECF3ED', temaBadgeText: '#24432C', temaBadgeHover: '#DFEADF',
-                coordinatorBorder: '#51875E', coordinatorBadge: '#24432C', coordinatorBadgeText: '#ffffff'
+                accent: '#5B3BB0', ink: '#3D2679',
+                background: '#EFE9FB', border: '#D7C9F0',
+                avatar: '#5B3BB0', avatarText: '#ffffff',
+                tagGerencia: '#5B3BB0', tagGerenciaText: '#ffffff',
+                tagSub: '#ffffff', tagSubText: '#3D2679',
+                temaBadge: '#ffffff', temaBadgeText: '#3D2679', temaBadgeHover: '#D7C9F0',
+                coordinatorBorder: '#5B3BB0', coordinatorBadge: '#5B3BB0', coordinatorBadgeText: '#ffffff',
+                soft: '#EFE9FB'
             },
             'Negócios Educacionais': {
-                accent: '#8D99AE', ink: '#354052',
-                background: '#F7F8FA', border: '#DBDFE6',
-                avatar: '#EDF0F4', avatarText: '#354052',
-                tagGerencia: '#8D99AE', tagGerenciaText: '#354052',
-                tagSub: '#EDF0F4', tagSubText: '#354052',
-                temaBadge: '#EDF0F4', temaBadgeText: '#354052', temaBadgeHover: '#DBDFE6',
-                coordinatorBorder: '#8D99AE', coordinatorBadge: '#354052', coordinatorBadgeText: '#ffffff'
+                accent: '#A85A05', ink: '#764006',
+                background: '#FDF0DC', border: '#EFD5AC',
+                avatar: '#A85A05', avatarText: '#ffffff',
+                tagGerencia: '#A85A05', tagGerenciaText: '#ffffff',
+                tagSub: '#ffffff', tagSubText: '#764006',
+                temaBadge: '#ffffff', temaBadgeText: '#764006', temaBadgeHover: '#EFD5AC',
+                coordinatorBorder: '#A85A05', coordinatorBadge: '#A85A05', coordinatorBadgeText: '#ffffff',
+                soft: '#FDF0DC'
             },
             'Operações Educacionais': {
-                accent: '#1A4B9F', ink: '#173D77',
-                background: '#F5F8FD', border: '#D3DFF2',
-                avatar: '#E8EFFA', avatarText: '#173D77',
-                tagGerencia: '#1A4B9F', tagGerenciaText: '#ffffff',
-                tagSub: '#E8EFFA', tagSubText: '#173D77',
-                temaBadge: '#E8EFFA', temaBadgeText: '#173D77', temaBadgeHover: '#D3DFF2',
-                coordinatorBorder: '#1A4B9F', coordinatorBadge: '#173D77', coordinatorBadgeText: '#ffffff'
+                accent: '#0B6B60', ink: '#084E46',
+                background: '#DFF3EF', border: '#B6DED5',
+                avatar: '#0B6B60', avatarText: '#ffffff',
+                tagGerencia: '#0B6B60', tagGerenciaText: '#ffffff',
+                tagSub: '#ffffff', tagSubText: '#084E46',
+                temaBadge: '#ffffff', temaBadgeText: '#084E46', temaBadgeHover: '#B6DED5',
+                coordinatorBorder: '#0B6B60', coordinatorBadge: '#0B6B60', coordinatorBadgeText: '#ffffff',
+                soft: '#DFF3EF'
             }
         };
 
@@ -394,7 +397,7 @@
 
         function areaStyle(gerencia) {
             const colors = PALETA_CORES[gerencia] || CORES_PADRAO;
-            return `--area-color:${colors.accent || '#64748b'};--area-ink:${colors.ink || '#334155'};--area-soft:${colors.temaBadge};--area-border:${colors.border};`;
+            return `--area-color:${colors.accent || '#64748b'};--area-ink:${colors.ink || '#334155'};--area-soft:${colors.soft || colors.temaBadge};--area-border:${colors.border};`;
         }
 
         function escapeHtml(value) {
@@ -459,7 +462,7 @@
 
             try {
                 console.log('🔄 Buscando dados do Google Sheets...');
-                const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${CONFIG.SHEET_NAME}`;
+                const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(CONFIG.SHEET_NAME)}&_=${Date.now()}`;
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const text = await response.text();
@@ -511,7 +514,7 @@
                         subSec: getValue(['subsec', 'subSec', 'coordenacao', 'coordenação']) || '',
                         email: getValue(['email', 'e-mail', 'contato']) || '',
                         phone: getValue(['phone', 'telefone', 'fone']) || '',
-                        foto: getValue(['foto', 'photo', 'url_foto', 'link_foto']) || '',
+                        foto: getValue(['foto', 'photo', 'url_foto', 'link_foto', 'url da foto', 'link da foto']) || '',
                         temas: parsedThemes.temas,
                         subtemas: parsedThemes.subtemas
                     };
