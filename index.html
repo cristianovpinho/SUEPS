@@ -99,7 +99,7 @@
 
         .professional-card {
             transition: all 0.3s ease;
-            border-width: 2px;
+            border-width: 1px;
             border-style: solid;
             border-radius: 16px;
             padding: 20px;
@@ -154,12 +154,12 @@
         }
 
         .professional-card.coordinator {
-            border-left-width: 6px !important;
+            border-left-width: 1px !important;
         }
 
         .gerente-card {
-            border: 2px solid var(--area-color, #1A4B9F) !important;
-            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06) !important;
+            border: 1px solid #E2E8F0 !important;
+            box-shadow: none !important;
             position: relative;
         }
         .gerente-card::after {
@@ -198,15 +198,22 @@
             display: none !important;
         }
 
-        .area-panel { border-top: 4px solid var(--area-color); }
-        .area-label, .area-icon { background: var(--area-soft) !important; color: var(--area-ink) !important; border-color: var(--area-color) !important; }
+        .area-panel { border: 1px solid #E2E8F0; box-shadow: none !important; }
+        .area-label { background: var(--area-color) !important; color: #fff !important; border: 0 !important; }
+        .area-icon { background: transparent !important; color: var(--area-color) !important; border: 0 !important; }
         .area-link { color: var(--area-ink) !important; }
         .area-coord { background: var(--area-soft) !important; border-color: var(--area-border) !important; }
         .area-coord span, .area-coord h3 { color: var(--area-ink) !important; }
         .area-coord .rounded-full { background: var(--area-color) !important; }
         .area-panel .gerente-card { background: var(--area-soft) !important; }
-        .area-heading { border-color: var(--area-color) !important; }
-        .professional-card { border-top: 4px solid var(--area-color) !important; }
+        .area-heading { border-width: 0 0 1px !important; border-color: #E2E8F0 !important; }
+        .area-heading h2 { color: var(--area-color); }
+        .professional-card { border: 1px solid #E2E8F0 !important; box-shadow: none; }
+        .professional-card:hover { transform: none; box-shadow: none; border-color: #CBD5E1 !important; }
+        .professional-card .tema-badge:hover { transform: none; text-decoration: underline; }
+        .gerente-card::after { background: #fff; color: var(--area-color, #1A4B9F); border: 0; box-shadow: none; }
+        .senai-header { box-shadow: none !important; }
+        .direct-reports, .direct-person, .direct-person:hover { background: #fff; }
         .professional-card .avatar { position: relative; overflow: hidden; }
         .professional-card .avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: inherit; }
         .contact-footer { margin-top: 18px; padding-top: 12px; border-top: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 8px; }
@@ -351,34 +358,34 @@
 
         const PALETA_CORES = {
             'Soluções Educacionais': {
-                accent: '#5B3BB0', ink: '#3D2679',
-                background: '#EFE9FB', border: '#D7C9F0',
-                avatar: '#5B3BB0', avatarText: '#ffffff',
-                tagGerencia: '#5B3BB0', tagGerenciaText: '#ffffff',
-                tagSub: '#ffffff', tagSubText: '#3D2679',
-                temaBadge: '#ffffff', temaBadgeText: '#3D2679', temaBadgeHover: '#D7C9F0',
-                coordinatorBorder: '#5B3BB0', coordinatorBadge: '#5B3BB0', coordinatorBadgeText: '#ffffff',
-                soft: '#EFE9FB'
+                accent: '#1A4B9F', ink: '#1A4B9F',
+                background: '#ffffff', border: '#E2E8F0',
+                avatar: '#1A4B9F', avatarText: '#ffffff',
+                tagGerencia: '#1A4B9F', tagGerenciaText: '#ffffff',
+                tagSub: '#ffffff', tagSubText: '#1A4B9F',
+                temaBadge: '#ffffff', temaBadgeText: '#1A4B9F', temaBadgeHover: '#F8FAFC',
+                coordinatorBorder: '#E2E8F0', coordinatorBadge: '#1A4B9F', coordinatorBadgeText: '#ffffff',
+                soft: '#ffffff'
             },
             'Negócios Educacionais': {
-                accent: '#A85A05', ink: '#764006',
-                background: '#FDF0DC', border: '#EFD5AC',
+                accent: '#A85A05', ink: '#A85A05',
+                background: '#ffffff', border: '#E2E8F0',
                 avatar: '#A85A05', avatarText: '#ffffff',
                 tagGerencia: '#A85A05', tagGerenciaText: '#ffffff',
-                tagSub: '#ffffff', tagSubText: '#764006',
-                temaBadge: '#ffffff', temaBadgeText: '#764006', temaBadgeHover: '#EFD5AC',
-                coordinatorBorder: '#A85A05', coordinatorBadge: '#A85A05', coordinatorBadgeText: '#ffffff',
-                soft: '#FDF0DC'
+                tagSub: '#ffffff', tagSubText: '#A85A05',
+                temaBadge: '#ffffff', temaBadgeText: '#A85A05', temaBadgeHover: '#F8FAFC',
+                coordinatorBorder: '#E2E8F0', coordinatorBadge: '#A85A05', coordinatorBadgeText: '#ffffff',
+                soft: '#ffffff'
             },
             'Operações Educacionais': {
-                accent: '#0B6B60', ink: '#084E46',
-                background: '#DFF3EF', border: '#B6DED5',
+                accent: '#0B6B60', ink: '#0B6B60',
+                background: '#ffffff', border: '#E2E8F0',
                 avatar: '#0B6B60', avatarText: '#ffffff',
                 tagGerencia: '#0B6B60', tagGerenciaText: '#ffffff',
-                tagSub: '#ffffff', tagSubText: '#084E46',
-                temaBadge: '#ffffff', temaBadgeText: '#084E46', temaBadgeHover: '#B6DED5',
-                coordinatorBorder: '#0B6B60', coordinatorBadge: '#0B6B60', coordinatorBadgeText: '#ffffff',
-                soft: '#DFF3EF'
+                tagSub: '#ffffff', tagSubText: '#0B6B60',
+                temaBadge: '#ffffff', temaBadgeText: '#0B6B60', temaBadgeHover: '#F8FAFC',
+                coordinatorBorder: '#E2E8F0', coordinatorBadge: '#0B6B60', coordinatorBadgeText: '#ffffff',
+                soft: '#ffffff'
             }
         };
 
@@ -635,7 +642,7 @@
 
             let html = `
                 <div class="flex flex-col items-center">
-                    <div class="w-full max-w-md bg-gradient-to-br from-blue-900 to-blue-950 text-white rounded-2xl shadow-xl border-4 border-blue-400 p-6 text-center relative z-10">
+                    <div class="w-full max-w-md bg-blue-600 text-white rounded-2xl border border-blue-600 p-6 text-center relative z-10">
                         <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-blue-400 text-blue-950 text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wider shadow">
                             Superintendente
                         </div>
