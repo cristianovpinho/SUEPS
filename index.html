@@ -216,6 +216,16 @@
         .contact-teams { padding: 3px 0; background: transparent; font-weight: 400; }
         .contact-email:hover, .contact-teams:hover { color: #1a4b9f; text-decoration: underline; }
         .contact-email:focus-visible, .contact-teams:focus-visible { outline: 2px solid #1a4b9f; outline-offset: 4px; border-radius: 3px; }
+        .direct-reports { width: 100%; max-width: 640px; margin: 16px auto 12px; padding: 12px; border: 1px solid var(--area-border, #d8e1ef); border-radius: 12px; background: #fff; text-align: left; }
+        .direct-reports h4 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--area-ink, #334155); margin-bottom: 10px; }
+        .direct-reports-list { display: grid; gap: 8px; }
+        .direct-person { display: flex; gap: 10px; align-items: center; width: 100%; padding: 8px; border-radius: 8px; background: #f8fafc; text-align: left; }
+        .direct-person:hover { background: var(--area-soft, #eef2f7); }
+        .direct-person:focus-visible { outline: 2px solid #1a4b9f; outline-offset: 2px; }
+        .direct-person strong { display: block; font-size: 12px; color: #1e293b; }
+        .direct-person small { display: block; font-size: 10px; color: #64748b; margin-top: 2px; }
+        .direct-avatar { position: relative; overflow: hidden; width: 32px; height: 32px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: var(--area-soft, #e2e8f0); color: var(--area-ink, #334155); font-size: 11px; font-weight: 700; }
+        .direct-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
@@ -333,7 +343,7 @@
         const CONFIG = {
             SHEET_ID: '1Vwp4olbNoo4cLfeI92OP3Qr20thXiRBQ2iJSGLfcS0g',
             SHEET_NAME: 'Dados',
-            CACHE_KEY: 'senai_professionals_cache_v6',
+            CACHE_KEY: 'senai_professionals_cache_v7',
             CACHE_EXPIRY: 2 * 60 * 1000,
         };
 
@@ -562,6 +572,41 @@
                    roleLower.includes('superintendente');
         }
 
+        function isSuperintendencia(area) {
+            return normalizeSearch(area) === 'superintendencia';
+        }
+
+        function hasCoordination(prof) {
+            return Boolean(String(prof.subSec || '').trim()) && normalizeSearch(prof.subSec) !== 'sem coordenacao';
+        }
+
+        function directReports(area) {
+            return professionals.filter(prof => normalizeSearch(prof.gerencia) === normalizeSearch(area)
+                && !hasCoordination(prof) && !isManager(prof.role)
+                && !['luiz eduardo leao', 'mateus simoes de freitas', 'vanessa sorda frason', 'carlos eduardo de medeiros braguini'].includes(normalizeSearch(prof.name))
+                && (isSuperintendencia(area) || (!isCoordinator(prof.role)
+                    && !['anderson scarlassara', 'natalia schultz'].includes(normalizeSearch(prof.name)))));
+        }
+
+        function renderDirectReports(area) {
+            const people = directReports(area);
+            if (!people.length) return '';
+            const title = isSuperintendencia(area)
+                ? 'Equipe vinculada diretamente à Superintendência'
+                : 'Equipe vinculada diretamente à Gerência';
+            return `<section class="direct-reports" style="${areaStyle(area)}" aria-label="${title}">
+                <h4>${title}</h4>
+                <div class="direct-reports-list">${people.map(prof => {
+                    const foto = photoUrl(prof.foto);
+                    const initials = String(prof.name || '').trim().split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase();
+                    return `<button type="button" class="direct-person" data-search-term="${escapeHtml(prof.name)}">
+                        <span class="direct-avatar"><span>${escapeHtml(initials)}</span>${foto ? `<img src="${escapeHtml(foto)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</span>
+                        <span><strong>${escapeHtml(prof.name)}</strong>${prof.role ? `<small>${escapeHtml(prof.role)}</small>` : ''}</span>
+                    </button>`;
+                }).join('')}</div>
+            </section>`;
+        }
+
         function renderHierarchy() {
             const container = document.getElementById('view-hierarchy');
             const gerentes = {
@@ -599,6 +644,7 @@
                         <p class="text-blue-200 text-xs mt-1">Superintendente</p>
                     </div>
 
+                    ${renderDirectReports('Superintendência')}
                     <div class="h-10 w-1 bg-blue-200"></div>
                     <div class="w-full max-w-5xl h-1 border-t-2 border-dashed border-blue-200"></div>
                     <div class="flex justify-between w-full max-w-5xl h-6">
@@ -639,6 +685,7 @@
                                 <div class="font-bold text-slate-900 text-sm">${info.nome}</div>
                             </div>
 
+                            ${renderDirectReports(gerencia)}
                             ${coordsHtml}
 
                             ${proposta ? `<div class="proposta-valor"><strong>🎯 Proposta de Valor</strong><br>${proposta}</div>` : ''}
@@ -676,27 +723,29 @@
             const iconesPorGerencia = {
                 'Soluções Educacionais': 'book-open',
                 'Negócios Educacionais': 'briefcase',
-                'Operações Educacionais': 'cpu'
+                'Operações Educacionais': 'cpu',
+                'Superintendência': 'building-2'
             };
 
             const gerentesPorGerencia = {
                 'Soluções Educacionais': 'Luiz Eduardo Leão',
                 'Negócios Educacionais': 'Mateus Simoes de Freitas',
-                'Operações Educacionais': 'Vanessa Sorda Frason'
+                'Operações Educacionais': 'Vanessa Sorda Frason',
+                'Superintendência': 'Carlos Eduardo de Medeiros Braguini'
             };
 
             const grupos = {};
             professionals.forEach(p => {
-                const gerencia = p.gerencia || 'Outros';
+                const gerencia = isSuperintendencia(p.gerencia) ? 'Superintendência' : String(p.gerencia || '').trim() || 'Outros';
                 if (!grupos[gerencia]) grupos[gerencia] = {};
-                const subKey = p.subSec || 'Sem Coordenação';
+                const subKey = hasCoordination(p) ? String(p.subSec).trim() : 'Sem Coordenação';
                 if (!grupos[gerencia][subKey]) grupos[gerencia][subKey] = [];
                 grupos[gerencia][subKey].push(p);
             });
 
             let html = '';
 
-            for (const [gerencia, subGroups] of Object.entries(grupos)) {
+            for (const [gerencia, subGroups] of Object.entries(grupos).sort(([a], [b]) => Number(isSuperintendencia(b)) - Number(isSuperintendencia(a)))) {
                 const corTag = gerencia === 'Soluções Educacionais' ? 'blue' :
                                gerencia === 'Negócios Educacionais' ? 'blue' :
                                gerencia === 'Operações Educacionais' ? 'blue' : 'slate';
@@ -750,7 +799,7 @@
                     html += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="container-${gerencia.replace(/\s/g, '')}-${subSec.replace(/\s/g, '')}">`;
                     
                     if (gerentesList.length > 0) {
-                        html += `<div class="col-span-full"><div class="leader-divider"><span>👔 Gerência</span></div></div>`;
+                        html += `<div class="col-span-full"><div class="leader-divider"><span>${isSuperintendencia(gerencia) ? 'Superintendência' : 'Gerência'}</span></div></div>`;
                         gerentesList.forEach(prof => {
                             html += createProfessionalCard(prof, false, true);
                         });
@@ -764,11 +813,10 @@
                     }
 
                     if (equipe.length > 0) {
-                        if (gerentesList.length > 0 || coordenadores.length > 0) {
-                            html += `<div class="col-span-full"><div class="leader-divider"><span>👤 Equipe</span></div></div>`;
-                        } else {
-                            html += `<div class="col-span-full"><div class="leader-divider"><span>👤 Equipe</span></div></div>`;
-                        }
+                        const teamLabel = subSec === 'Sem Coordenação'
+                            ? (isSuperintendencia(gerencia) ? 'Equipe vinculada diretamente à Superintendência' : 'Equipe vinculada diretamente à Gerência')
+                            : 'Equipe';
+                        html += `<div class="col-span-full"><div class="leader-divider"><span>${teamLabel}</span></div></div>`;
                         equipe.forEach(prof => {
                             html += createProfessionalCard(prof, false, false);
                         });
