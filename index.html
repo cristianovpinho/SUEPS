@@ -340,7 +340,7 @@
         const CONFIG = {
             SHEET_ID: '1Vwp4olbNoo4cLfeI92OP3Qr20thXiRBQ2iJSGLfcS0g',
             SHEET_NAME: 'Dados',
-            CACHE_KEY: 'senai_professionals_cache_v4',
+            CACHE_KEY: 'senai_professionals_cache_v5',
             CACHE_EXPIRY: 2 * 60 * 1000,
         };
 
@@ -348,31 +348,31 @@
 
         const PALETA_CORES = {
             'Soluções Educacionais': {
-                accent: '#355d9b', ink: '#234474',
-                background: '#F5F8FC', border: '#DCE5F2',
-                avatar: '#EAF0F9', avatarText: '#234474',
-                tagGerencia: '#355d9b', tagGerenciaText: '#ffffff',
-                tagSub: '#EAF0F9', tagSubText: '#234474',
-                temaBadge: '#EAF0F9', temaBadgeText: '#234474', temaBadgeHover: '#DCE5F2',
-                coordinatorBorder: '#355d9b', coordinatorBadge: '#234474', coordinatorBadgeText: '#ffffff'
+                accent: '#1A4B9F', ink: '#173D77',
+                background: '#F5F8FD', border: '#D3DFF2',
+                avatar: '#E8EFFA', avatarText: '#173D77',
+                tagGerencia: '#1A4B9F', tagGerenciaText: '#ffffff',
+                tagSub: '#E8EFFA', tagSubText: '#173D77',
+                temaBadge: '#E8EFFA', temaBadgeText: '#173D77', temaBadgeHover: '#D3DFF2',
+                coordinatorBorder: '#1A4B9F', coordinatorBadge: '#173D77', coordinatorBadgeText: '#ffffff'
             },
             'Negócios Educacionais': {
-                accent: '#2f1d80', ink: '#2F1D80',
-                background: '#F7F6FC', border: '#DED9EF',
-                avatar: '#EDEAF7', avatarText: '#2F1D80',
-                tagGerencia: '#2f1d80', tagGerenciaText: '#ffffff',
-                tagSub: '#EDEAF7', tagSubText: '#2F1D80',
-                temaBadge: '#EDEAF7', temaBadgeText: '#2F1D80', temaBadgeHover: '#DED9EF',
-                coordinatorBorder: '#2f1d80', coordinatorBadge: '#2F1D80', coordinatorBadgeText: '#ffffff'
+                accent: '#12366F', ink: '#12366F',
+                background: '#F4F6FA', border: '#CED7E6',
+                avatar: '#E5EBF4', avatarText: '#12366F',
+                tagGerencia: '#12366F', tagGerenciaText: '#ffffff',
+                tagSub: '#E5EBF4', tagSubText: '#12366F',
+                temaBadge: '#E5EBF4', temaBadgeText: '#12366F', temaBadgeHover: '#CED7E6',
+                coordinatorBorder: '#12366F', coordinatorBadge: '#12366F', coordinatorBadgeText: '#ffffff'
             },
             'Operações Educacionais': {
-                accent: '#bbecff', ink: '#183E59',
-                background: '#F5FCFF', border: '#BBECFF',
-                avatar: '#BBECFF', avatarText: '#183E59',
-                tagGerencia: '#bbecff', tagGerenciaText: '#183E59',
-                tagSub: '#E7F7FF', tagSubText: '#183E59',
-                temaBadge: '#E7F7FF', temaBadgeText: '#183E59', temaBadgeHover: '#BBECFF',
-                coordinatorBorder: '#bbecff', coordinatorBadge: '#183E59', coordinatorBadgeText: '#ffffff'
+                accent: '#5B83BD', ink: '#244570',
+                background: '#F7FAFE', border: '#DCE6F5',
+                avatar: '#ECF2FB', avatarText: '#244570',
+                tagGerencia: '#5B83BD', tagGerenciaText: '#ffffff',
+                tagSub: '#ECF2FB', tagSubText: '#244570',
+                temaBadge: '#ECF2FB', temaBadgeText: '#244570', temaBadgeHover: '#DCE6F5',
+                coordinatorBorder: '#5B83BD', coordinatorBadge: '#244570', coordinatorBadgeText: '#ffffff'
             }
         };
 
@@ -691,7 +691,7 @@
 
             const grupos = {};
             professionals.forEach(p => {
-                const gerencia = p.gerencia || 'Superintendência';
+                const gerencia = p.gerencia || 'Outros';
                 if (!grupos[gerencia]) grupos[gerencia] = {};
                 const subKey = p.subSec || 'Sem Coordenação';
                 if (!grupos[gerencia][subKey]) grupos[gerencia][subKey] = [];
@@ -824,7 +824,7 @@
                 ${isCoordinatorFlag ? '<span class="coordinator-star" style="color:var(--area-color)"><i data-lucide="badge-check" class="w-4 h-4"></i></span>' : ''}
                 <div>
                     <div class="flex items-start gap-3 mb-3">
-                        <div class="avatar" style="background:${cores.avatar};color:${cores.avatarText}"><span>${e(initials)}</span>${foto ? `<img src="${e(foto)}" alt="Foto de ${e(prof.name)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</div>
+                        <div class="avatar" style="background:${cores.avatar};color:${cores.avatarText}"><span>${e(initials)}</span>${foto ? `<img src="${e(foto)}" alt="Foto de ${e(prof.name)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.parentElement.title='Foto indisponível: confira o link direto e a permissão de acesso à imagem.';this.remove()">` : ''}</div>
                         <div><h4 class="font-bold text-slate-900 text-base leading-snug">${e(prof.name || 'Nome não informado')}</h4>
                             ${roleVisible ? `<p class="text-xs text-slate-600 mt-1">${e(prof.role)}</p>` : ''}
                             ${isCoordinatorFlag ? `<span class="coordinator-badge mt-1" style="background:${cores.coordinatorBadge};color:white">Coordenação</span>` : ''}
