@@ -1152,7 +1152,18 @@ body.has-email-selection { padding-bottom:var(--email-bar-height,170px); }
         function photoUrl(value) {
             try {
                 const url = new URL(String(value || '').trim());
-                return ['https:', 'http:'].includes(url.protocol) && !url.username && !url.password ? url.href : '';
+                if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) return '';
+                if (['drive.google.com', 'www.drive.google.com'].includes(url.hostname.toLowerCase())) {
+                    const id = url.pathname.match(/^\/file\/d\/([A-Za-z0-9_-]+)/)?.[1] || url.searchParams.get('id');
+                    if (!id || !/^[A-Za-z0-9_-]{10,}$/.test(id)) return '';
+                    const imageUrl = new URL('https://drive.google.com/thumbnail');
+                    imageUrl.searchParams.set('id', id);
+                    imageUrl.searchParams.set('sz', 'w1000');
+                    const resourceKey = url.searchParams.get('resourcekey');
+                    if (resourceKey) imageUrl.searchParams.set('resourcekey', resourceKey);
+                    return imageUrl.href;
+                }
+                return url.href;
             } catch { return ''; }
         }
 
