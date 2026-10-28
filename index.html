@@ -582,6 +582,13 @@ body.has-email-selection { padding-bottom:var(--email-bar-height,170px); }
 .dark .email-selection-actions button { color:#BFDBFE; border-color:#64748B; }
 .dark .email-selection-actions #email-clear,.dark #email-selection-status { color:#CBD5E1; }
 @media(max-width:640px) { .email-selection-inner { padding:.75rem 1rem; gap:.6rem; } .email-selection-summary { flex-basis:100%; } #email-selected-people { max-height:4.5rem; } .email-selection-actions { width:100%; } }
+
+.professional-card .card-topics { display:flex; flex-direction:column; align-items:flex-start; gap:.45rem; min-height:8.5rem; }
+.professional-card .card-topic { max-width:100%; text-align:left; margin:0; line-height:1.4; }
+.professional-card .card-topic>span { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:anywhere; }
+.professional-card .card-bottom { margin-top:auto; }
+.professional-card .card-bottom .contact-footer { margin-top:.7rem; }
+.professional-card .card-bottom .person-details { margin-top:.7rem; }
 </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
@@ -1209,7 +1216,7 @@ body.has-email-selection { padding-bottom:var(--email-bar-height,170px); }
             document.body.style.setProperty('--email-bar-height', Math.ceil(entries[0].target.getBoundingClientRect().height) + 'px');
         }).observe(document.getElementById('email-selection-bar'));
 
-        function createProfessionalCard(prof, isCoordinatorFlag, isManagerFlag) {
+        function createProfessionalCard(prof, isCoordinatorFlag, isManagerFlag, searchQuery = '') {
             const e = escapeHtml;
             const cores = PALETA_CORES[isSuperintendencia(prof.gerencia) ? 'Superintendência' : prof.gerencia] || CORES_PADRAO;
             const initials = String(prof.name || '').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
@@ -1217,16 +1224,17 @@ body.has-email-selection { padding-bottom:var(--email-bar-height,170px); }
             const managerClass = isManagerFlag && !isSuper ? 'gerente-card' : '';
             const roleVisible = isCoordinatorFlag || isManagerFlag;
             const foto = photoUrl(prof.foto);
-            const subtemas = prof.subtemas || [];
             const temas = [...(prof.temas || [])];
-            subtemas.forEach(item => {
-                if (item.tema && !temas.some(tema => normalizeSearch(tema) === normalizeSearch(item.tema))) temas.push(item.tema);
-            });
-            const badge = (text, term, sub = false) => `<button type="button" class="tema-badge ${sub ? 'subtema-badge' : ''}" style="background:${sub ? '#ffffff' : (cores.themeSurface || '#F5F7FA')};color:${cores.ink || '#475569'};border:1px solid ${cores.themeBorder || '#E2E8F0'}" data-search-term="${e(term)}">${e(text)}</button>`;
-            const topicHtml = temas.map(tema => {
-                const children = subtemas.filter(item => normalizeSearch(item.tema) === normalizeSearch(tema));
-                return `<div class="mb-2">${badge(tema, tema)}${children.length ? `<div class="pl-3 border-l-2 ml-2" style="border-color:${cores.border}">${children.map(item => badge(item.nome, `${item.tema} - ${item.nome}`, true)).join('')}</div>` : ''}</div>`;
-            }).join('') + subtemas.filter(item => !item.tema).map(item => badge(item.nome, `${item.tema} - ${item.nome}`, true)).join('');
+            const words = normalizeSearch(searchQuery).split(/\s+/).filter(word => word && word !== '-');
+            const query = normalizeSearch(searchQuery);
+            const rankedTopics = temas.map((tema, index) => {
+                const text = normalizeSearch(tema);
+                const score = words.length ? (text.includes(query) ? words.length + 1 : words.filter(word => text.includes(word)).length) : 0;
+                return {tema, index, score};
+            }).sort((a,b) => b.score - a.score || a.index - b.index);
+            const visibleTopics = rankedTopics.slice(0,3);
+            const hiddenTopics = Math.max(0, temas.length - visibleTopics.length);
+            const topicHtml = visibleTopics.map(({tema}) => `<button type="button" class="tema-badge card-topic" title="${e(tema)}" style="background:${cores.themeSurface || '#F5F7FA'};color:${cores.ink || '#475569'};border:1px solid ${cores.themeBorder || '#E2E8F0'}" data-search-term="${e(tema)}"><span>${e(tema)}</span></button>`).join('');
             const email = String(prof.email || '').trim();
             const validEmail = /^[^\s@<>"&,;?]+@[^\s@<>"&,;?]+\.[^\s@<>"&,;?]+$/.test(email);
             const contactHtml = validEmail || prof.phone ? `
@@ -1248,12 +1256,12 @@ body.has-email-selection { padding-bottom:var(--email-bar-height,170px); }
                     <p class="text-xs font-semibold mb-1" style="color:${cores.temaBadgeText}">${e(prof.gerencia)}</p>
                     ${prof.subSec && prof.subSec !== 'Sem Coordenação' ? `<p class="text-xs text-slate-500">${e(prof.subSec)}</p>` : ''}
                 </div>
-                <div class="mt-4 border-t pt-3" style="border-color:${cores.border}">
-                    <div>${topicHtml || '<span class="text-xs text-slate-400">Nenhum tema cadastrado</span>'}</div>
+                <div class="card-topics-section mt-4 border-t pt-3" style="border-color:${cores.border}">
+                    <div class="card-topics">${topicHtml || '<span class="text-xs text-slate-400">Nenhum tema cadastrado</span>'}</div>
                 </div>
-                <button type="button" class="person-details" data-person-details="${professionals.indexOf(prof)}">Ver detalhes <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></button>
+                <div class="card-bottom"><button type="button" class="person-details" data-person-details="${professionals.indexOf(prof)}">${hiddenTopics ? `Ver todos os assuntos (+${hiddenTopics})` : 'Ver detalhes'} <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></button>
                 ${contactHtml}
-                ${validEmail ? `<label class="email-select"><input type="checkbox" data-email-select="${professionals.indexOf(prof)}" ${selectedEmailPeople.has(emailPersonKey(prof)) ? 'checked' : ''} aria-label="Selecionar ${e(prof.name)} para e-mail"><span>Selecionar para e-mail</span></label>` : '<span class="email-unavailable">Sem e-mail válido para seleção</span>'}
+                ${validEmail ? `<label class="email-select"><input type="checkbox" data-email-select="${professionals.indexOf(prof)}" ${selectedEmailPeople.has(emailPersonKey(prof)) ? 'checked' : ''} aria-label="Selecionar ${e(prof.name)} para e-mail"><span>Selecionar para e-mail</span></label>` : '<span class="email-unavailable">Sem e-mail válido para seleção</span>'}</div>
             </article>`;
         }
 
@@ -1341,7 +1349,7 @@ body.has-email-selection { padding-bottom:var(--email-bar-height,170px); }
                 document.getElementById('view-search').classList.remove('hidden');
                 const matches = filteredPeople();
                 document.getElementById('results-count').textContent = query ? `Pessoas associadas a “${document.getElementById('search-input').value.trim()}”.` : 'Pessoas associadas aos filtros selecionados.';
-                document.getElementById('view-search').innerHTML = matches.length ? matches.map(prof => createProfessionalCard(prof, isCoordinator(prof.role), isManager(prof.role))).join('') : `<div class="empty-state col-span-full"><i data-lucide="search"></i><h3>Nenhuma pessoa encontrada</h3><p>Tente outro nome ou assunto, ou limpe os filtros para ampliar a busca.</p><button type="button" onclick="resetAllFilters()">Limpar busca e filtros</button><button type="button" class="text-action" onclick="openWizard()">Explorar assuntos</button></div>`;
+                document.getElementById('view-search').innerHTML = matches.length ? matches.map(prof => createProfessionalCard(prof, isCoordinator(prof.role), isManager(prof.role), query)).join('') : `<div class="empty-state col-span-full"><i data-lucide="search"></i><h3>Nenhuma pessoa encontrada</h3><p>Tente outro nome ou assunto, ou limpe os filtros para ampliar a busca.</p><button type="button" onclick="resetAllFilters()">Limpar busca e filtros</button><button type="button" class="text-action" onclick="openWizard()">Explorar assuntos</button></div>`;
                 updateTabState('directory');
             } else {
                 document.getElementById('view-search').classList.add('hidden');
